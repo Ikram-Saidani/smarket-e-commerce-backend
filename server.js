@@ -1,3 +1,4 @@
+
 const express = require("express");
 const { mongoose } = require("mongoose");
 require("dotenv").config();
@@ -5,18 +6,23 @@ const asyncHandler = require("./utils/asyncHandler");
 const { CustomFail } = require("./utils/customResponses");
 const ProductRouter = require("./routes/product");
 const path = require("path");
-var cors = require("cors");
+// var cors = require("cors");
+const UserRouter = require("./routes/user");
+const authRouter = require("./routes/auth");
 
 const app = express();
 
 //app middelwares
 app.use(express.static(path.join(__dirname, "productsImages")));
-// app.use(express.static(path.join(__dirname, "uploads")));
-// app.use(express.json());
+app.use(express.static(path.join(__dirname, "uploads")));
+app.use(express.json());
 
-app.use(cors());
+// app.use(cors());
 
 app.use("/api/product", ProductRouter);
+app.use("/api/auth", authRouter);
+// app.use("/api/order", OrderRouter);
+app.use("/api/user", UserRouter);
 
 // 404 handler
 app.all(

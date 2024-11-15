@@ -6,7 +6,6 @@ const categories = [
   "footwear",
   "jewellery",
   "beauty",
-  "wellness",
   "electronics",
   "groceries",
 ];
@@ -54,10 +53,11 @@ const productSchema = new Schema(
       default: 0,
       min: [0, "Total quantity cannot be negative"],
     },
+
     inStock: {
       type: Boolean,
       default: function () {
-        return this.totalQuantity > 0;
+        return this.countInStock > 0;
       },
     },
     saleCount: {
@@ -89,21 +89,39 @@ const productSchema = new Schema(
         message: "Invalid image URL format",
       },
     },
-
-    size: {
-      type: String,
-      enum: ["XS", "S", "M", "L", "XL", "XXL"],
-      required: function () {
-        return this.category === "fashion";
+    
+    size: [
+      {
+        size: {
+          type: String,
+          enum: ["XS", "S", "M", "L", "XL", "XXL"],
+          required: function () {
+            return this.category === "fashion";
+          },
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
       },
-    },
-    shoeSize: {
-      type: String,
-      enum: Array.from({ length: 31 }, (_, i) => (i + 20).toString()),
-      required: function () {
-        return this.category === "footwear";
+    ],
+    shoeSize: [
+      {
+        shoeSize: {
+          type: String,
+          enum: Array.from({ length: 31 }, (_, i) => (i + 20).toString()),
+          required: function () {
+            return this.category === "footwear";
+          },
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
       },
-    },
+    ],
 
     specifications: {
       type: Map,
@@ -115,7 +133,7 @@ const productSchema = new Schema(
     ingredients: {
       type: [String],
       required: function () {
-        return ["beauty", "wellness"].includes(this.category);
+        return this.category === "beauty";
       },
     },
 
@@ -147,18 +165,31 @@ productSchema.index({ title: 1 });
 productSchema.index({ "rate.rating": 1 });
 productSchema.index({ coins: 1 });
 
-// Virtual to calculate `price` from `oldPrice` and `discount`
 productSchema.virtual("calculatedPrice").get(function () {
-  return this.oldPrice ? this.oldPrice * (1 - this.discount / 100) : this.price;
+  if (this.oldPrice && this.discount) {
+    return this.oldPrice * (1 - this.discount / 100);
+  }
+
+  return this.price || 0;
 });
 
-// Virtual to calculate `coin` from `price`
 productSchema.virtual("calculatedCoins").get(function () {
   return this.price ? Math.floor((this.price * 3) / 2) : 0;
 });
 
-// Pre-save middleware to save calculated values to `price` and `coins`
 productSchema.pre("save", function (next) {
+  if (this.category === "fashion" && Array.isArray(this.size)) {
+    this.countInStock = this.size.reduce(
+      (total, item) => total + item.quantity,
+      0
+    );
+  } else if (this.category === "footwear" && Array.isArray(this.shoeSize)) {
+    this.countInStock = this.shoeSize.reduce(
+      (total, item) => total + item.quantity,
+      0
+    );
+  }
+
   if (this.oldPrice && this.discount) {
     this.price = this.oldPrice * (1 - this.discount / 100);
   }
@@ -170,6 +201,6 @@ productSchema.pre("save", function (next) {
   next();
 });
 
-const ProductModel = model("Product", productSchema);
+const ProductModel = model("product", productSchema);
 
 module.exports = ProductModel;
