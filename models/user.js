@@ -74,8 +74,7 @@ const userSchema = new Schema(
     },
     socketId: {
       type: String,
-      unique: true,
-      sparse: true,
+      default: null,
     },
     notifications: [
       {

@@ -1,6 +1,9 @@
 const ProductModel = require("../models/product");
 const { CustomSuccess, CustomFail } = require("../utils/customResponses");
 const catchDbErrors = require("../utils/catchDbErros");
+const { validationResult } = require("express-validator");
+const cloudinary = require("cloudinary").v2;
+
 /**
  * @method : get
  * @route : ~/api/product/
@@ -140,7 +143,7 @@ async function getPopularProductsController(req, res) {
 async function getPopularProductsByCategoryController(req, res) {
   const { category } = req.params;
   const products = await catchDbErrors(
-    ProductModel.find({ category }).sort({saleCount:-1}).limit(6)
+    ProductModel.find({ category }).sort({ saleCount: -1 }).limit(6)
   );
   if (!products.length) {
     throw new CustomFail("No popular products found");
@@ -162,38 +165,60 @@ async function getSingleProductController(req, res) {
   res.json(new CustomSuccess(product));
 }
 
-
-
-
-// const { validationResult } = require("express-validator");
-
 /**
  * @method : post
- * @route : ~/api/product/
- * @desc  : post a new product
+ * @route : ~/api/product
+ * @desc  : add a new product
  * @access : admin
  */
-// async function postNewProductController(req, res) {
-//   console.log(req.file);
-//   const result = validationResult(req);
-//   if (!result.isEmpty()) {
-//     throw new customError(
-//       "message from express validator, title must be longer the 3  words",
-//       "fail",
-//       400
-//     );
-//   }
-//   var newProd;
-//   try {
-//     newProd = await ProductModel.create({
-//       ...req.body,
-//       image: "/" + req.file.filename,
-//     });
-//   } catch (error) {
-//     throw new customError(error.message, "errorrrrr", 400);
-//   }
-//   res.json({ status: "success", data: newProd });
-// }
+async function postNewProductController(req, res) {
+  const result = validationResult(req);
+  if (!result.isEmpty()) {
+    throw new CustomFail("Validation Error: Please check your inputs");
+  }
+
+  // Ensure the 'image' field is in the body
+  const { image, category, size, specifications, expiryDate } = req.body;
+
+  if (!image) {
+    throw new CustomFail("Image is required for creating a product.");
+  }
+
+  let cloudinaryImageUrl = image; // Directly assign the image URL
+  // Handle category-specific validations
+  if (category === "fashion" && (!size || !Array.isArray(size))) {
+    throw new CustomFail("Fashion products require a valid size array.");
+  }
+  if (
+    category === "electronics" &&
+    (!specifications || typeof specifications !== "object")
+  ) {
+    throw new CustomFail(
+      "Electronics require specifications as a key-value map."
+    );
+  }
+  if (
+    category === "groceries" &&
+    (!expiryDate || isNaN(new Date(expiryDate).getTime()))
+  ) {
+    throw new CustomFail("Groceries require a valid expiry date.");
+  }
+
+  let newProduct;
+
+  // Create the product with the Cloudinary image URL
+  newProduct = await catchDbErrors(
+    ProductModel.create({
+      ...req.body,
+      image: cloudinaryImageUrl, // Store the Cloudinary image URL in the DB
+    })
+  );
+
+  res.status(201).json({
+    status: "success",
+    data: newProduct,
+  });
+}
 
 /**
  * @method : put
@@ -201,20 +226,21 @@ async function getSingleProductController(req, res) {
  * @desc  : update  exist product
  * @access : admin
  */
-// async function updateProductController(req, res) {
-//   console.log(req.body);
+async function updateProductController(req, res) {
+  console.log(req.body);
 
-//   const updatedProd = await catchDbErrors(
-//     ProductModel.findByIdAndUpdate(req.params.id, req.body, {
-//       returnDocument: "after",
-//     })
-//   );
-//   if (!updatedProd) {
-//     throw new customFail("product not found");
-//   }
+  const updatedProd = await catchDbErrors(
+    ProductModel.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    })
+  );
+  if (!updatedProd) {
+    throw new CustomFail("product not found");
+  }
 
-//   res.json(new customSuccess(updatedProd));
-// }
+  res.json(new CustomSuccess(updatedProd));
+}
 
 /**
  * @method : delete
@@ -222,15 +248,15 @@ async function getSingleProductController(req, res) {
  * @desc  : delete a product
  * @access : admin
  */
-// async function deleteProductController(req, res) {
-//   const deletedProduct = await catchDbErrors(
-//     ProductModel.findByIdAndDelete(req.params.id)
-//   );
-//   if (!deletedProduct) {
-//     throw new customFail("product not found");
-//   }
-//   res.json(new customSuccess(deletedProduct));
-// }
+async function deleteProductController(req, res) {
+  const deletedProduct = await catchDbErrors(
+    ProductModel.findByIdAndDelete(req.params.id)
+  );
+  if (!deletedProduct) {
+    throw new CustomFail("product not found");
+  }
+  res.json(new CustomSuccess(deletedProduct));
+}
 module.exports = {
   getAllProductsController,
   getAllProductsPaginationController,
@@ -239,5 +265,9 @@ module.exports = {
   getFeaturedProductsController,
   getNewProductsController,
   getPopularProductsController,
-  getPopularProductsByCategoryController,getSingleProductController
+  getPopularProductsByCategoryController,
+  getSingleProductController,
+  postNewProductController,
+  updateProductController,
+  deleteProductController,
 };

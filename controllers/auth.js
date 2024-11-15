@@ -34,31 +34,28 @@ async function registerController(req, res) {
  * @description login user
  * @accsess visitor
  *  */
-// async function loginController(req, res) {
-//   let existUser = await catchDbErrors(
-//     UserModel.findOne({ email: req.body.email }, { isAdmin: 0, __v: 0 })
-//   );
-//   if (!existUser) {
-//     throw new customFail("somthing went wrong1 ");
-//   }
-//   if (!existUser.validUser) {
-//     throw new customFail("user not valid");
-//   }
-//   console.log(existUser);
-//   const isMatchPassword = bcrypt.compareSync(
-//     req.body.password,
-//     existUser.password
-//   );
+async function loginController(req, res) {
+  let existUser = await catchDbErrors(
+    UserModel.findOne({ email: req.body.email })
+  );
+  
+  if (!existUser) {
+    throw new CustomFail("somthing went wrong ");
+  }
+ 
+  const isMatchPassword = bcrypt.compareSync(
+    req.body.password,
+    existUser.password
+  );
 
-//   if (!isMatchPassword) {
-//     throw new customFail("somthing went wrong 2 ");
-//   }
+  if (!isMatchPassword) {
+    throw new CustomFail("somthing went wrong");
+  }
 
-//   const token = jwtGenerateToken(existUser._id);
-//   existUser.password = "";
-
-//   res.json(new customSuccess({ token: token, user: existUser }));
-// }
+  const token = jwtGenerateToken(existUser._id);
+  existUser.password = "";
+  res.json(new CustomSuccess({ token: token, user: existUser }));
+}
 
 /**
  * @method post
@@ -66,39 +63,38 @@ async function registerController(req, res) {
  * @description login admin, coordinator, ambassador
  * @accsess visitor
  *  */
+async function loginAdminController(req, res) {
+  let existUser = await catchDbErrors(
+    UserModel.findOne({ email: req.body.email })
+  );
+  if (!existUser) {
+    throw new CustomFail("somthing went wrong");
+  }
 
-// async function loginAdminController(req, res) {
-//   let existUser = await catchDbErrors(
-//     UserModel.findOne({ email: req.body.email }, { __v: 0 })
-//   );
-//   if (!existUser) {
-//     throw new customFail("somthing went wrong1 ");
-//   }
+  const isMatchPassword = bcrypt.compareSync(
+    req.body.password,
+    existUser.password
+  );
 
-//   const isMatchPassword = bcrypt.compareSync(
-//     req.body.password,
-//     existUser.password
-//   );
+  if (!isMatchPassword) {
+    throw new CustomFail("somthing went wrong");
+  }
 
-//   if (!isMatchPassword) {
-//     throw new customFail("somthing went wrong 2 ");
-//   }
+  if (!existUser.role==="admin" || !existUser.role==="coordinator" || !existUser.role==="ambassador") {
+    throw new CustomFail("somthing went wrong");
+  }
 
-//   if (!existUser.isAdmin) {
-//     throw new customFail("somthing went wrong 3 ");
-//   }
+  const token = jwtGenerateToken(existUser._id);
+  existUser.password = "";
 
-//   const token = jwtGenerateToken(existUser._id);
-//   existUser.password = "";
-
-//   res.json(new customSuccess({ token: token, user: existUser }));
-// }
+  res.json(new CustomSuccess({ token: token, user: existUser }));
+}
 
 /**
  * @method post
  * @endpoint  ~/api/auth/checktoken
- * @description checktoken admin
- * @accsess admin
+ * @description checktoken for user admin coordinator ambassador
+ * @accsess user admin coordinator ambassador
  *  */
 async function checkTokenController(req, res) {
   res.json(new CustomSuccess("token valid"));
@@ -119,8 +115,8 @@ async function validateUserController(req, res) {
 
 module.exports = {
   registerController,
-  // loginController,
-  // loginAdminController,
+  loginController,
+  loginAdminController,
   checkTokenController,
   validateUserController,
 };

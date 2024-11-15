@@ -10,37 +10,19 @@ const {
   getPopularProductsController,
   getSingleProductController,
   getPopularProductsByCategoryController,
+  postNewProductController,
+  updateProductController,
+  deleteProductController,
 } = require("../controllers/product");
+const multer = require("multer");
+const verifyAdmin = require("../utils/verifyAdmin");
 
+const storage = multer.memoryStorage();
 
-/**
- * const multer  = require('multer')
-
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-
-      cb(null, 'products')
-    },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-      cb(null, file.fieldname + '-' + uniqueSuffix+"."+file.originalname.split('.')[1])
-    },
-  })
-
-
-  const  fileFilter= function(req, file, cb) {
-
-    if (!file.mimetype.includes('image') ) {
-      return cb(new Error('I don\'t have a clue!'), false );
-    }
-    cb(null, true);
-  }
-const upload = multer({ storage: storage,fileFilter:fileFilter})
-
- */
-
-
-
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+}).single("image");
 
 /**
  * @method : get
@@ -126,15 +108,18 @@ ProductRouter.get(
  */
 ProductRouter.get("/:id", asyncHandler(getSingleProductController));
 
-
-
 /**
  * @method : post
- * @route : ~/api/product/
- * @desc  : post a new product
+ * @route : ~/api/product
+ * @desc  : add a new product
  * @access : admin
  */
-//   ProductRouter.post('/',asyncHandler(verifyAdmin),upload.single("image"),asyncHandler(postNewProductController))
+ProductRouter.post(
+  "/",
+  asyncHandler(verifyAdmin),
+  upload,
+  asyncHandler(postNewProductController)
+);
 
 /**
  * @method : put
@@ -142,7 +127,11 @@ ProductRouter.get("/:id", asyncHandler(getSingleProductController));
  * @desc  : update  exist product
  * @access : admin
  */
-// ProductRouter.put('/update/:id',asyncHandler(verifyAdmin),asyncHandler(updateProductController))
+ProductRouter.put(
+  "/update/:id",
+  asyncHandler(verifyAdmin),
+  asyncHandler(updateProductController)
+);
 
 /**
  * @method : delete
@@ -150,6 +139,10 @@ ProductRouter.get("/:id", asyncHandler(getSingleProductController));
  * @desc  : delete a product
  * @access : admin
  */
-// ProductRouter.delete('/delete/:id',asyncHandler(verifyAdmin),asyncHandler(deleteProductController))
+ProductRouter.delete(
+  "/delete/:id",
+  asyncHandler(verifyAdmin),
+  asyncHandler(deleteProductController)
+);
 
 module.exports = ProductRouter;
