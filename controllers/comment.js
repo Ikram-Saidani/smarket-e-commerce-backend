@@ -1,7 +1,7 @@
 const CommentModel = require("../models/comment");
 const ProductModel = require("../models/product");
 const catchDbErrors = require("../utils/catchDbErros");
-const { customFail, customSuccess } = require("../utils/customResponses");
+const { CustomFail, CustomSuccess } = require("../utils/customResponses");
 
 /**
  * @method post
@@ -14,7 +14,7 @@ async function postNewCommentController(req, res) {
     ProductModel.findById(req.params.productId)
   );
   if (!product) {
-    throw new customFail("product not found");
+    throw new CustomFail("product not found");
   }
   const newComment = await catchDbErrors(
     CommentModel.create({
@@ -24,63 +24,61 @@ async function postNewCommentController(req, res) {
     })
   );
   if (req.body.rating > 0) {
-    const a = product.rate.rating * product.rate.ratingCount + +req.body.rating;
-    const newReating = a / (product.rate.ratingCount + 1);
-    product.rate.rating = newReating;
+    const totalRating = product.rate.rating * product.rate.ratingCount + req.body.rating;
+    const newRating = totalRating / (product.rate.ratingCount + 1);
+    product.rate.rating = newRating;
     product.rate.ratingCount += 1;
     await product.save();
   }
-  res.json(new customSuccess(newComment));
+  res.json(new CustomSuccess(newComment));
 }
 
 /**
  * @method get
  * @endpoint  ~/api/comment/getcomments/:productId
- * @description get prduct Comments
- * @access vesitor
+ * @description get all comments for a product
+ * @access visitor
  */
 async function getProductCommentsController(req, res) {
   const product = await catchDbErrors(
     ProductModel.findById(req.params.productId)
   );
   if (!product) {
-    throw new customFail("product not found");
+    throw new CustomFail("product not found");
   }
   const productComments = await catchDbErrors(
-    CommentModel.find({ productId: product._id }).populate("userId")
+    CommentModel.find({ productId: product._id })
+      .populate("userId", "avatar name")
   );
-  productComments.forEach((element) => {
-    element.userId.password = "";
-  });
-  res.json(new customSuccess(productComments));
+  res.json(new CustomSuccess(productComments));
 }
 
 /**
  * @method delete
  * @endpoint  ~/api/comment/delete/:id
- * @description delete Comments
- * @access user
+ * @description delete user's Comments
+ * @access user 
  */
 async function deleteCommentsController(req, res) {
   const comment = await catchDbErrors(CommentModel.findById(req.params.id));
   if (!comment) {
-    throw new customFail("comment not found");
+    throw new CustomFail("comment not found");
   }
   console.log(req.user._id.toString() == comment.userId.toString());
 
   if (req.user._id.toString() !== comment.userId.toString()) {
-    throw new customFail("unauthorized");
+    throw new CustomFail("unauthorized");
   }
   const deletedComment = await catchDbErrors(
     CommentModel.findByIdAndDelete(req.params.id)
   );
-  res.json(new customSuccess(deletedComment));
+  res.json(new CustomSuccess(deletedComment));
 }
 
 /**
  * @method delete
  * @endpoint  ~/api/comment/deleteadmin/:id
- * @description delete Comments
+ * @description delete Comments by admin
  * @access admin
  */
 async function adminDeleteCommentController(req, res) {
@@ -88,7 +86,7 @@ async function adminDeleteCommentController(req, res) {
     CommentModel.findByIdAndDelete(req.params.id)
   );
 
-  res.json(new customSuccess(deletedComment));
+  res.json(new CustomSuccess(deletedComment));
 }
 module.exports = {
   postNewCommentController,

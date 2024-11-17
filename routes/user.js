@@ -1,8 +1,10 @@
 const {
   userUpdateProfileController,
   updateUserImage,
+  updateCoinsEarned,updateUserRole
 } = require("../controllers/user");
 const asyncHandler = require("../utils/asyncHandler");
+const verifyAdmin = require("../utils/verifyAdmin");
 const verifyUser = require("../utils/verifyUser");
 const multer = require("multer");
 const UserRouter = require("express").Router();
@@ -56,4 +58,68 @@ UserRouter.put(
   asyncHandler(updateUserImage)
 );
 
+/**
+ * @method put
+ * @endpoint ~/api/user/coinsearned/:id
+ * @description update coins earned by user
+ * @access user
+ */
+UserRouter.put(
+  "/coinsearned/:id",
+  asyncHandler(verifyUser),
+  asyncHandler(updateCoinsEarned)
+);
+
+/**
+ * @method put
+ * @endpoint ~/api/user/role/:id
+ * @description update user's role by admin
+ * @access admin
+ */
+UserRouter.put("/role/:id",
+asyncHandler(verifyAdmin),
+asyncHandler(updateUserRole)
+);
+
+/**
+ * @method get
+ * @endpoint  ~/api/user
+ * @description get all users
+ * @access admin
+ */
+
+/**
+ * @method get
+ * @endpoint  ~/api/user/firstorder
+ * @description get users that have not made any order
+ * @access admin
+ */
+
+/**
+ * @method get
+ * @endpoint  ~/api/user/coordinators
+ * @description get coordinators
+ * @access admin
+ */
+
+/**
+ * @method get
+ * @endpoint  ~/api/user/ambassadors
+ * @description get ambassadors
+ * @access admin
+ */
+
+/**
+ * @method get
+ * @endpoint  ~/api/user/users
+ * @description get users
+ * @access admin
+ */
+
+/**
+ * @method delete
+ * @endpoint  ~/api/user/delete/:id
+ * @description delete user
+ * @access admin
+ */
 module.exports = UserRouter;

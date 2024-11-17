@@ -13,6 +13,7 @@ const {
   postNewProductController,
   updateProductController,
   deleteProductController,
+  getProductsCountInStockController,
 } = require("../controllers/product");
 const multer = require("multer");
 const verifyAdmin = require("../utils/verifyAdmin");
@@ -124,12 +125,13 @@ ProductRouter.post(
 /**
  * @method : put
  * @route : ~/api/product/update/:id
- * @desc  : update  exist product
+ * @desc  : update an existing product
  * @access : admin
  */
 ProductRouter.put(
   "/update/:id",
   asyncHandler(verifyAdmin),
+  upload,
   asyncHandler(updateProductController)
 );
 
@@ -143,6 +145,18 @@ ProductRouter.delete(
   "/delete/:id",
   asyncHandler(verifyAdmin),
   asyncHandler(deleteProductController)
+);
+
+/**
+ * @method : get
+ * @route : ~/api/product/allproducts/countinstock
+ * @desc  : get all products with countInStock < 10
+ * @access : admin
+ */
+ProductRouter.get(
+  "/allproducts/countinstock",
+  asyncHandler(verifyAdmin),
+  asyncHandler(getProductsCountInStockController)
 );
 
 module.exports = ProductRouter;

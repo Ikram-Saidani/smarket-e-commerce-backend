@@ -25,11 +25,9 @@ async function userUpdateProfileController(req, res) {
     );
   } else {
     updatedUser = await catchDbErrors(
-      UserModel.findByIdAndUpdate(
-        req.user._id,
-        { $push: { address: req.body.address } },
-        { new: true }
-      )
+      UserModel.findByIdAndUpdate(req.user._id, {
+        $push: { address: req.body.address },
+      })
     );
     delete req.body.address;
     updatedUser = await catchDbErrors(
@@ -48,7 +46,6 @@ async function userUpdateProfileController(req, res) {
  * @description update user's image
  * @access user
  */
-
 async function updateUserImage(req, res) {
   const file = req.file;
   const isAutorizedUser = req.user._id.toString() === req.params.id;
@@ -77,4 +74,89 @@ async function updateUserImage(req, res) {
   res.json(new CustomSuccess(updatedUser));
 }
 
-module.exports = { userUpdateProfileController, updateUserImage };
+/**
+ * @method put
+ * @endpoint ~/api/user/coinsearned/:id
+ * @description update coins earned by user
+ * @access user
+ */
+async function updateCoinsEarned(req, res) {
+  const isAutorizedUser = req.user._id.toString() === req.params.id;
+  if (!isAutorizedUser) {
+    throw new CustomFail("unauthorized");
+  }
+  const updatedUser = await catchDbErrors(
+    UserModel.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { coinsEarned: req.body.coinsEarned } },
+      { new: true }
+    )
+  );
+  res.json(new CustomSuccess(updatedUser));
+}
+
+/**
+ * @method put
+ * @endpoint ~/api/user/role/:id
+ * @description update user's role by admin
+ * @access admin
+ */
+async function updateUserRole(req, res) {
+    const updatedUser = await catchDbErrors(
+        UserModel.findByIdAndUpdate(
+        req.params.id,
+        { role: req.body.role },
+        { new: true }
+        )
+    );
+    res.json(new CustomSuccess(updatedUser));
+}
+
+/**
+ * @method get
+ * @endpoint  ~/api/user
+ * @description get all users
+ * @access admin
+ */
+
+/**
+ * @method get
+ * @endpoint  ~/api/user/firstorder
+ * @description get users that have not made any order
+ * @access admin
+ */
+
+/**
+ * @method get
+ * @endpoint  ~/api/user/coordinators
+ * @description get coordinators
+ * @access admin
+ */
+
+/**
+ * @method get
+ * @endpoint  ~/api/user/ambassadors
+ * @description get ambassadors
+ * @access admin
+ */
+
+/**
+ * @method get
+ * @endpoint  ~/api/user/users
+ * @description get users
+ * @access admin
+ */
+
+/**
+ * @method delete
+ * @endpoint  ~/api/user/delete/:id
+ * @description delete user
+ * @access admin
+ */
+
+module.exports = {
+  userUpdateProfileController,
+  updateUserImage,
+  updateCoinsEarned,
+  updateUserRole,
+};

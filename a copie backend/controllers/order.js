@@ -2,6 +2,70 @@ const OrderModel = require("../models/order");
 const catchDbErrors = require("../utils/catchDbErros");
 const { customFail, customSuccess } = require("../utils/customResponses");
 const ProductModel = require("../models/product");
+// /**
+//  * @method post
+//  * @endpoint ~/api/order/placeOrder
+//  * @description Place an order and update stock
+//  * @access user
+//  */
+/*
+const OrderModel = require("../models/order");
+const ProductModel = require("../models/product");
+const NotificationModel = require("../models/notification");
+const catchDbErrors = require("../utils/catchDbErros");
+const { CustomSuccess, CustomFail } = require("../utils/customResponses");
+
+async function placeOrderController(req, res) {
+  const { orderItems } = req.body; // Assume orderItems is an array of product IDs and quantities
+
+  // Check if each product in the order has sufficient stock
+  for (let item of orderItems) {
+      const product = await catchDbErrors(ProductModel.findById(item.productId));
+      if (!product) {
+          throw new CustomFail(`Product ${item.productId} not found.`);
+      }
+
+      if (product.countInStock < item.quantity) {
+          throw new CustomFail(`Insufficient stock for product: ${product.name}`);
+      }
+
+      // Update the stock
+      product.countInStock -= item.quantity;
+      await catchDbErrors(product.save());
+
+      // Check if the stock is below 5 and create a notification if necessary
+      if (product.countInStock < 5) {
+          const existingNotification = await NotificationModel.findOne({
+              "message": `Product ${product.name} is running out of stock`,
+          });
+
+          if (!existingNotification) {
+              const newNotification = new NotificationModel({
+                  userId: req.user._id, // Assuming user is the admin
+                  message: `Product ${product.name} is running out of stock`,
+              });
+              await catchDbErrors(newNotification.save());
+          }
+      }
+  }
+
+  // After all stock updates and checks, create the order
+  const newOrder = new OrderModel({
+      userId: req.user._id,
+      items: orderItems,
+      status: "pending",
+      // other order details
+  });
+
+  await catchDbErrors(newOrder.save());
+
+  res.json(new CustomSuccess("Order placed successfully."));
+}
+
+module.exports = { placeOrderController };
+
+*/
+
 
 /**
  * @method : get

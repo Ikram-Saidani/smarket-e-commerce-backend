@@ -47,64 +47,11 @@ const userSchema = new Schema(
       type: Date,
       required: true,
     },
-    comments: [
-      {
-        productId: {
-          type: Schema.Types.ObjectId,
-          ref: "product",
-        },
-        text: {
-          type: String,
-        },
-        rating: {
-          type: Number,
-          min: 1,
-          max: 5,
-        },
-        date: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
     role: {
       type: String,
       enum: ["admin", "coordinator", "ambassador", "user"],
       default: "user",
     },
-    socketId: {
-      type: String,
-      default: null,
-    },
-    notifications: [
-      {
-        message: String,
-        timestamp: {
-          type: Date,
-          default: Date.now,
-        },
-        isRead: {
-          type: Boolean,
-          default: false,
-        },
-      },
-    ],
-    donationHistory: [
-      {
-        productDonated: {
-          type: Schema.Types.ObjectId,
-          ref: "product",
-        },
-        coins: {
-          type: Number,
-          min: [0, "Coins must be a positive number"],
-        },
-        date: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
     coinsEarned: {
       type: Number,
       default: 0,
