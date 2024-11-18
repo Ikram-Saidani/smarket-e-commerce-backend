@@ -17,7 +17,7 @@ const verifyAdmin = require("../utils/verifyAdmin");
 const verifyUser = require("../utils/verifyUser");
 
 /**
- * @method : post
+ * @method post
  * @route : ~/api/order/postorder
  * @desc  : post new order and notify admin if stock is low, also update paymentTotal
  * @access : user
@@ -29,7 +29,7 @@ OrderRouter.post(
 );
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/order
  * @desc  : get all orders
  * @access : admin
@@ -41,7 +41,7 @@ OrderRouter.get(
 );
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/order/userorders
  * @desc  : get user orders
  * @access : user admin
@@ -53,7 +53,7 @@ OrderRouter.get(
 );
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/order/:id
  * @desc  : get single order
  * @access : user admin
@@ -65,7 +65,7 @@ OrderRouter.get(
 );
 
 /**
- * @method : put
+ * @method put
  * @route : ~/api/order/updateorder/:id
  * @desc  : update order status
  * @access : admin

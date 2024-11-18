@@ -12,6 +12,8 @@ const authRouter = require("./routes/auth");
 const CommentRouter = require("./routes/comment");
 const NotificationRouter = require("./routes/notification");
 const OrderRouter = require("./routes/order");
+const RoleRequestRouter = require("./routes/roleRequest");
+const DonationHistoryRouter = require("./routes/donationHistory");
 
 const app = express();
 
@@ -25,8 +27,10 @@ app.use(express.json());
 app.use("/api/product", ProductRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/order", OrderRouter);
+app.use("/api/donationHistory", DonationHistoryRouter);
 app.use("/api/comment", CommentRouter);
 app.use("/api/notification", NotificationRouter);
+app.use("/api/roleRequest", RoleRequestRouter);
 app.use("/api/user", UserRouter);
 
 // 404 handler

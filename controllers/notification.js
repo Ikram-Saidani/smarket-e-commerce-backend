@@ -8,8 +8,8 @@ const { CustomSuccess } = require("../utils/customResponses");
 /**
  * @method get
  * @endpoint  ~/api/notification
- * @description get all notifications
- * @access users
+ * @description get all user's notifications
+ * @access user
  */
 async function getNotificationsController(req, res) {
   const notifications = await catchDbErrors(
@@ -167,6 +167,36 @@ async function notifyCoinsForHopeController(req, res) {
   res.json(new CustomSuccess("Hope-related notifications sent to users."));
 }
 
+/**
+ * @method post
+ * @endpoint  ~/api/notification/birthday
+ * @description notify users that they earned 100coins because of their birthday month
+ * @access admin
+ */
+async function notifyBirthdayCoinsController(req, res) {
+  const users = await catchDbErrors(UserModel.find());
+
+  for (const user of users) {
+    const birthdayMonth = new Date(user.birthday).getMonth();
+    const currentMonth = new Date().getMonth();
+
+    if (birthdayMonth === currentMonth) {
+      const message = `Happy birthday! You earned 100 coins as a gift from us.`;
+      await catchDbErrors(
+        NotificationModel.create({
+          userId: user._id,
+          message,
+        })
+      );
+    }
+
+    user.coinsEarned += 100;
+    await catchDbErrors(user.save());
+  }
+
+  res.json(new CustomSuccess("Birthday coins notifications sent to users."));
+}
+
 module.exports = {
   getNotificationsController,
   notifyAmbassadorEligibilityController,
@@ -174,4 +204,5 @@ module.exports = {
   notifyCoinsForHopeController,
   notifyFirstOrderDiscountController,
   notifyCoordinatorEligibilityController,
+  notifyBirthdayCoinsController,
 };

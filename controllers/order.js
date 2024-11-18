@@ -6,7 +6,7 @@ const NotificationModel = require("../models/notification");
 const UserModel = require("../models/user");
 
 /**
- * @method : post
+ * @method post
  * @route : ~/api/order/postorder
  * @desc  : post new order and notify admin if stock is low, also update paymentTotal
  * @access : user
@@ -78,7 +78,7 @@ async function postNewOrderController(req, res) {
 }
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/order
  * @desc  : get all orders
  * @access : admin
@@ -92,7 +92,7 @@ async function getAllOrdersController(req, res) {
 }
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/order/userorders
  * @desc  : get user orders
  * @access : user admin
@@ -115,7 +115,7 @@ async function getuserOrdersController(req, res) {
 }
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/order/:id
  * @desc  : get single order
  * @access : user admin
@@ -136,7 +136,7 @@ async function getSingleOrder(req, res) {
 }
 
 /**
- * @method : put
+ * @method put
  * @route : ~/api/order/updateorder/:id
  * @desc  : update order status
  * @access : admin

@@ -3,7 +3,8 @@ const {
   notifyAmbassadorEligibilityController,
   notifyAffordableProductsController,
   notifyCoinsForHopeController,
-  notifyFirstOrderDiscountController,notifyCoordinatorEligibilityController
+  notifyFirstOrderDiscountController,notifyCoordinatorEligibilityController,
+  notifyBirthdayCoinsController
 } = require("../controllers/notification");
 const asyncHandler = require("../utils/asyncHandler");
 const verifyAdmin = require("../utils/verifyAdmin");
@@ -13,7 +14,7 @@ const verifyUser = require("../utils/verifyUser");
 /**
  * @method get
  * @endpoint  ~/api/notification
- * @description get all notifications
+ * @description get all user's notifications
  * @access user
  */
 NotificationRouter.get(
@@ -80,6 +81,18 @@ NotificationRouter.post(
   "/coinsforhope",
   asyncHandler(verifyAdmin),
   asyncHandler(notifyCoinsForHopeController)
+);
+
+/**
+ * @method post
+ * @endpoint  ~/api/notification/birthday
+ * @description notify users that they earned 100coins because of their birthday month
+ * @access admin
+ */
+NotificationRouter.post(
+  "/birthday",
+  asyncHandler(verifyAdmin),
+  asyncHandler(notifyBirthdayCoinsController)
 );
 
 module.exports = NotificationRouter;

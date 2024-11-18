@@ -22,12 +22,12 @@ const orderSchema = new Schema(
       type: String,
       enum: ["pending", "done", "cancelled"],
       default: "pending",
-    }
+    },
   },
   { timestamps: true, versionKey: false }
 );
 orderSchema.index({ userId: 1 });
 
-const OrderModel = new model("order", orderSchema);
+const OrderModel = model("order", orderSchema);
 
 module.exports = OrderModel;

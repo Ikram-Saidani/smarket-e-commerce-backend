@@ -127,7 +127,7 @@ async function getAllUsers(req, res) {
 }
 
 /**
- * @method GET
+ * @method get
  * @route  ~/api/user/firstorder
  * @desc   Get users that have not made any orders
  * @access Admin
@@ -213,6 +213,36 @@ async function deleteUser(req, res) {
   res.json(new CustomSuccess("User deleted"));
 }
 
+/**
+ * @method get
+ * @endpoint  ~/api/user/birthday
+ * @description get users that their birthday is in this month
+ * @access admin
+ */
+async function getUsersWithBirthday(req, res) {
+  const users = await catchDbErrors(UserModel.find());
+  if (!users || users.length === 0) {
+    throw new CustomFail("No users found");
+  }
+
+  const usersWithBirthday = [];
+  const today = new Date();
+  for (const user of users) {
+    const userBirthday = new Date(user.dateOfBirth);
+    if (
+      userBirthday.getMonth() === today.getMonth()
+    ) {
+      usersWithBirthday.push(user);
+    }
+  }
+
+  if (usersWithBirthday.length === 0) {
+    throw new CustomFail("No users have birthday today");
+  }
+
+  res.json(new CustomSuccess(usersWithBirthday));
+}
+
 module.exports = {
   userUpdateProfileController,
   updateUserImage,
@@ -224,4 +254,5 @@ module.exports = {
   getAmbassadors,
   getUsers,
   deleteUser,
+  getUsersWithBirthday,
 };

@@ -9,6 +9,7 @@ const {
   getAmbassadors,
   getUsers,
   deleteUser,
+  getUsersWithBirthday,
 } = require("../controllers/user");
 const asyncHandler = require("../utils/asyncHandler");
 const verifyAdmin = require("../utils/verifyAdmin");
@@ -151,6 +152,18 @@ UserRouter.delete(
   "/delete/:id",
   asyncHandler(verifyAdmin),
   asyncHandler(deleteUser)
+);
+
+/**
+ * @method get
+ * @endpoint  ~/api/user/birthday
+ * @description get users that their birthday is in this month
+ * @access admin
+ */
+UserRouter.get(
+  "/birthday",
+  asyncHandler(verifyAdmin),
+  asyncHandler(getUsersWithBirthday)
 );
 
 module.exports = UserRouter;

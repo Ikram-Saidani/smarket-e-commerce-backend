@@ -5,7 +5,7 @@ const { validationResult } = require("express-validator");
 const cloudinary = require("../utils/cloudinary");
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/product/
  * @desc  : get all products
  * @access : visitor
@@ -19,7 +19,7 @@ async function getAllProductsController(req, res) {
 }
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/product/pagination?page=1&limit=10
  * @desc  : get all products with pagination queries
  * @access : visitor
@@ -50,7 +50,7 @@ async function getAllProductsPaginationController(req, res) {
 }
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/product/category/:category
  * @desc  : get products by category
  * @access : visitor
@@ -64,7 +64,7 @@ async function getProductsByCategoryController(req, res) {
   res.json(new CustomSuccess(products));
 }
 /**
- * @method : get
+ * @method get
  * @route : ~/api/product/category/:category/pagination?page=1&limit=10
  * @desc  : get products by category with pagination queries
  * @access : visitor
@@ -87,7 +87,7 @@ async function getProductsByCategoryPaginationController(req, res) {
 }
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/product/featured
  * @desc  : get 6 featured products
  * @access : visitor
@@ -103,7 +103,7 @@ async function getFeaturedProductsController(req, res) {
 }
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/product/newproducts
  * @desc  : get 6 new products
  * @access : visitor
@@ -119,7 +119,7 @@ async function getNewProductsController(req, res) {
 }
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/product/popular
  * @desc  : get 6 popular products
  * @access : visitor
@@ -135,7 +135,7 @@ async function getPopularProductsController(req, res) {
 }
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/product/category/:category/popular
  * @desc  : get 6 popular products by category
  * @access : visitor
@@ -152,7 +152,7 @@ async function getPopularProductsByCategoryController(req, res) {
 }
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/product/:id
  * @desc  : get single product with id
  * @access : visitor
@@ -166,7 +166,7 @@ async function getSingleProductController(req, res) {
 }
 
 /**
- * @method : post
+ * @method post
  * @route : ~/api/product
  * @desc  : add a new product
  * @access : admin
@@ -256,7 +256,7 @@ try {
 }
 
 /**
- * @method : put
+ * @method put
  * @route : ~/api/product/update/:id
  * @desc  : update an existing product
  * @access : admin
@@ -343,7 +343,7 @@ async function updateProductController(req, res) {
 }
 
 /**
- * @method : delete
+ * @method delete
  * @route : ~/api/product/delete/:id
  * @desc  : delete a product
  * @access : admin
@@ -359,7 +359,7 @@ async function deleteProductController(req, res) {
 }
 
 /**
- * @method : get
+ * @method get
  * @route : ~/api/product/allproducts/countinstock
  * @desc  : get all products with countInStock < 10
  * @access : admin
