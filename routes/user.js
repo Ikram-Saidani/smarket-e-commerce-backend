@@ -1,7 +1,14 @@
 const {
   userUpdateProfileController,
   updateUserImage,
-  updateCoinsEarned,updateUserRole
+  updateCoinsEarned,
+  updateUserRole,
+  getAllUsers,
+  getUsersWithNoOrder,
+  getCoordinators,
+  getAmbassadors,
+  getUsers,
+  deleteUser,
 } = require("../controllers/user");
 const asyncHandler = require("../utils/asyncHandler");
 const verifyAdmin = require("../utils/verifyAdmin");
@@ -76,9 +83,10 @@ UserRouter.put(
  * @description update user's role by admin
  * @access admin
  */
-UserRouter.put("/role/:id",
-asyncHandler(verifyAdmin),
-asyncHandler(updateUserRole)
+UserRouter.put(
+  "/role/:id",
+  asyncHandler(verifyAdmin),
+  asyncHandler(updateUserRole)
 );
 
 /**
@@ -87,6 +95,7 @@ asyncHandler(updateUserRole)
  * @description get all users
  * @access admin
  */
+UserRouter.get("/", asyncHandler(verifyAdmin), asyncHandler(getAllUsers));
 
 /**
  * @method get
@@ -94,6 +103,11 @@ asyncHandler(updateUserRole)
  * @description get users that have not made any order
  * @access admin
  */
+UserRouter.get(
+  "/firstorder",
+  asyncHandler(verifyAdmin),
+  asyncHandler(getUsersWithNoOrder)
+);
 
 /**
  * @method get
@@ -101,6 +115,11 @@ asyncHandler(updateUserRole)
  * @description get coordinators
  * @access admin
  */
+UserRouter.get(
+  "/coordinators",
+  asyncHandler(verifyAdmin),
+  asyncHandler(getCoordinators)
+);
 
 /**
  * @method get
@@ -108,6 +127,11 @@ asyncHandler(updateUserRole)
  * @description get ambassadors
  * @access admin
  */
+UserRouter.get(
+  "/ambassadors",
+  asyncHandler(verifyAdmin),
+  asyncHandler(getAmbassadors)
+);
 
 /**
  * @method get
@@ -115,6 +139,7 @@ asyncHandler(updateUserRole)
  * @description get users
  * @access admin
  */
+UserRouter.get("/users", asyncHandler(verifyAdmin), asyncHandler(getUsers));
 
 /**
  * @method delete
@@ -122,4 +147,10 @@ asyncHandler(updateUserRole)
  * @description delete user
  * @access admin
  */
+UserRouter.delete(
+  "/delete/:id",
+  asyncHandler(verifyAdmin),
+  asyncHandler(deleteUser)
+);
+
 module.exports = UserRouter;

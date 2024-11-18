@@ -11,6 +11,7 @@ const UserRouter = require("./routes/user");
 const authRouter = require("./routes/auth");
 const CommentRouter = require("./routes/comment");
 const NotificationRouter = require("./routes/notification");
+const OrderRouter = require("./routes/order");
 
 const app = express();
 
@@ -23,10 +24,10 @@ app.use(express.json());
 
 app.use("/api/product", ProductRouter);
 app.use("/api/auth", authRouter);
-// app.use("/api/order", OrderRouter);
-app.use("/api/user", UserRouter);
+app.use("/api/order", OrderRouter);
 app.use("/api/comment", CommentRouter);
 app.use("/api/notification", NotificationRouter);
+app.use("/api/user", UserRouter);
 
 // 404 handler
 app.all(

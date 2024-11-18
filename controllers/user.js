@@ -102,14 +102,14 @@ async function updateCoinsEarned(req, res) {
  * @access admin
  */
 async function updateUserRole(req, res) {
-    const updatedUser = await catchDbErrors(
-        UserModel.findByIdAndUpdate(
-        req.params.id,
-        { role: req.body.role },
-        { new: true }
-        )
-    );
-    res.json(new CustomSuccess(updatedUser));
+  const updatedUser = await catchDbErrors(
+    UserModel.findByIdAndUpdate(
+      req.params.id,
+      { role: req.body.role },
+      { new: true }
+    )
+  );
+  res.json(new CustomSuccess(updatedUser));
 }
 
 /**
@@ -118,13 +118,40 @@ async function updateUserRole(req, res) {
  * @description get all users
  * @access admin
  */
+async function getAllUsers(req, res) {
+  const users = await catchDbErrors(UserModel.find());
+  if (!users || users.length === 0) {
+    throw new CustomFail("No users found");
+  }
+  res.json(new CustomSuccess(users));
+}
 
 /**
- * @method get
- * @endpoint  ~/api/user/firstorder
- * @description get users that have not made any order
- * @access admin
+ * @method GET
+ * @route  ~/api/user/firstorder
+ * @desc   Get users that have not made any orders
+ * @access Admin
  */
+async function getUsersWithNoOrder(req, res) {
+  const users = await catchDbErrors(UserModel.find());
+  if (!users || users.length === 0) {
+    throw new CustomFail("No users found");
+  }
+
+  const usersWithNoOrders = [];
+  for (const user of users) {
+    const orders = await catchDbErrors(OrderModel.find({ userId: user._id }));
+    if (!orders || orders.length === 0) {
+      usersWithNoOrders.push(user);
+    }
+  }
+
+  if (usersWithNoOrders.length === 0) {
+    throw new CustomFail("All users have made at least one order");
+  }
+
+  res.json(new CustomSuccess(usersWithNoOrders));
+}
 
 /**
  * @method get
@@ -132,6 +159,15 @@ async function updateUserRole(req, res) {
  * @description get coordinators
  * @access admin
  */
+async function getCoordinators(req, res) {
+  const coordinators = await catchDbErrors(
+    UserModel.find({ role: "coordinator" })
+  );
+  if (!coordinators || coordinators.length === 0) {
+    throw new CustomFail("No coordinators found");
+  }
+  res.json(new CustomSuccess(coordinators));
+}
 
 /**
  * @method get
@@ -139,6 +175,15 @@ async function updateUserRole(req, res) {
  * @description get ambassadors
  * @access admin
  */
+async function getAmbassadors(req, res) {
+  const ambassadors = await catchDbErrors(
+    UserModel.find({ role: "ambassador" })
+  );
+  if (!ambassadors || ambassadors.length === 0) {
+    throw new CustomFail("No ambassadors found");
+  }
+  res.json(new CustomSuccess(ambassadors));
+}
 
 /**
  * @method get
@@ -146,6 +191,13 @@ async function updateUserRole(req, res) {
  * @description get users
  * @access admin
  */
+async function getUsers(req, res) {
+  const users = await catchDbErrors(UserModel.find({ role: "user" }));
+  if (!users || users.length === 0) {
+    throw new CustomFail("No users found");
+  }
+  res.json(new CustomSuccess(users));
+}
 
 /**
  * @method delete
@@ -153,10 +205,23 @@ async function updateUserRole(req, res) {
  * @description delete user
  * @access admin
  */
+async function deleteUser(req, res) {
+  const user = await catchDbErrors(UserModel.findByIdAndDelete(req.params.id));
+  if (!user) {
+    throw new CustomFail("User not found");
+  }
+  res.json(new CustomSuccess("User deleted"));
+}
 
 module.exports = {
   userUpdateProfileController,
   updateUserImage,
   updateCoinsEarned,
   updateUserRole,
+  getAllUsers,
+  getUsersWithNoOrder,
+  getCoordinators,
+  getAmbassadors,
+  getUsers,
+  deleteUser,
 };

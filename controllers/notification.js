@@ -1,4 +1,5 @@
 const NotificationModel = require("../models/notification");
+const OrderModel = require("../models/order");
 const ProductModel = require("../models/product");
 const UserModel = require("../models/user");
 const catchDbErrors = require("../utils/catchDbErros");
