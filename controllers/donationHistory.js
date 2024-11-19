@@ -130,7 +130,7 @@ async function getUserDonationHistoriesController(req, res) {
  * @desc  : get single donationHistory
  * @access : user admin
  */
-async function getSingleDonationHistory(req, res) {
+async function getSingleDonationHistoryController(req, res) {
   const donationHistory = await catchDbErrors(
     DonationHistoryModel.findById(req.params.id).populate({
       path: "orderDonation",
@@ -256,7 +256,7 @@ module.exports = {
   postNewDonationHistoryController,
   getAllDonationHistoriesController,
   getUserDonationHistoriesController,
-  getSingleDonationHistory,
+  getSingleDonationHistoryController,
   deleteDonationHistoryByAdminController,
   getDonationHistoriesByDateController,
   getTopUsersBasedOnDonationHistoriesController,

@@ -1,15 +1,17 @@
 const {
   userUpdateProfileController,
-  updateUserImage,
-  updateCoinsEarned,
-  updateUserRole,
-  getAllUsers,
-  getUsersWithNoOrder,
-  getCoordinators,
-  getAmbassadors,
-  getUsers,
-  deleteUser,
-  getUsersWithBirthday,
+  updateUserImageController,
+  updateCoinsEarnedController,
+  updateUserRoleController,
+  getAllUsersController,
+  getUsersWithNoOrderController,
+  getCoordinatorsController,
+  getAmbassadorsController,
+  getUsersController,
+  deleteUserController,
+  getUsersWithBirthdayController,
+  getUnassignedCoordinatorsController,
+  getUnassignedAmbassadorsController,
 } = require("../controllers/user");
 const asyncHandler = require("../utils/asyncHandler");
 const verifyAdmin = require("../utils/verifyAdmin");
@@ -63,7 +65,7 @@ UserRouter.put(
   "/updateimage/:id",
   asyncHandler(verifyUser),
   upload.single("avatar"),
-  asyncHandler(updateUserImage)
+  asyncHandler(updateUserImageController)
 );
 
 /**
@@ -75,7 +77,7 @@ UserRouter.put(
 UserRouter.put(
   "/coinsearned/:id",
   asyncHandler(verifyUser),
-  asyncHandler(updateCoinsEarned)
+  asyncHandler(updateCoinsEarnedController)
 );
 
 /**
@@ -87,7 +89,7 @@ UserRouter.put(
 UserRouter.put(
   "/role/:id",
   asyncHandler(verifyAdmin),
-  asyncHandler(updateUserRole)
+  asyncHandler(updateUserRoleController)
 );
 
 /**
@@ -96,7 +98,11 @@ UserRouter.put(
  * @description get all users
  * @access admin
  */
-UserRouter.get("/", asyncHandler(verifyAdmin), asyncHandler(getAllUsers));
+UserRouter.get(
+  "/",
+  asyncHandler(verifyAdmin),
+  asyncHandler(getAllUsersController)
+);
 
 /**
  * @method get
@@ -107,7 +113,7 @@ UserRouter.get("/", asyncHandler(verifyAdmin), asyncHandler(getAllUsers));
 UserRouter.get(
   "/firstorder",
   asyncHandler(verifyAdmin),
-  asyncHandler(getUsersWithNoOrder)
+  asyncHandler(getUsersWithNoOrderController)
 );
 
 /**
@@ -119,7 +125,7 @@ UserRouter.get(
 UserRouter.get(
   "/coordinators",
   asyncHandler(verifyAdmin),
-  asyncHandler(getCoordinators)
+  asyncHandler(getCoordinatorsController)
 );
 
 /**
@@ -131,7 +137,7 @@ UserRouter.get(
 UserRouter.get(
   "/ambassadors",
   asyncHandler(verifyAdmin),
-  asyncHandler(getAmbassadors)
+  asyncHandler(getAmbassadorsController)
 );
 
 /**
@@ -140,7 +146,11 @@ UserRouter.get(
  * @description get users
  * @access admin
  */
-UserRouter.get("/users", asyncHandler(verifyAdmin), asyncHandler(getUsers));
+UserRouter.get(
+  "/users",
+  asyncHandler(verifyAdmin),
+  asyncHandler(getUsersController)
+);
 
 /**
  * @method delete
@@ -151,7 +161,7 @@ UserRouter.get("/users", asyncHandler(verifyAdmin), asyncHandler(getUsers));
 UserRouter.delete(
   "/delete/:id",
   asyncHandler(verifyAdmin),
-  asyncHandler(deleteUser)
+  asyncHandler(deleteUserController)
 );
 
 /**
@@ -163,7 +173,31 @@ UserRouter.delete(
 UserRouter.get(
   "/birthday",
   asyncHandler(verifyAdmin),
-  asyncHandler(getUsersWithBirthday)
+  asyncHandler(getUsersWithBirthdayController)
+);
+
+/**
+ * @method get
+ * @route : ~/api/user/unassignedcoordinators
+ * @desc  : get coordinators that are not assigned to any group
+ * @access : admin
+ */
+UserRouter.get(
+  "/unassignedcoordinators",
+  asyncHandler(verifyAdmin),
+  asyncHandler(getUnassignedCoordinatorsController)
+);
+
+/**
+ * @method get
+ * @route : ~/api/user/unassignedambassadors
+ * @desc  : get ambassadors that are not assigned to any group
+ * @access : admin
+ */
+UserRouter.get(
+  "/unassignedambassadors",
+  asyncHandler(verifyAdmin),
+  asyncHandler(getUnassignedAmbassadorsController)
 );
 
 module.exports = UserRouter;

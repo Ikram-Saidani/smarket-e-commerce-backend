@@ -46,7 +46,7 @@ async function userUpdateProfileController(req, res) {
  * @description update user's image
  * @access user
  */
-async function updateUserImage(req, res) {
+async function updateUserImageController(req, res) {
   const file = req.file;
   const isAutorizedUser = req.user._id.toString() === req.params.id;
   const userId = req.params.id;
@@ -80,7 +80,7 @@ async function updateUserImage(req, res) {
  * @description update coins earned by user
  * @access user
  */
-async function updateCoinsEarned(req, res) {
+async function updateCoinsEarnedController(req, res) {
   const isAutorizedUser = req.user._id.toString() === req.params.id;
   if (!isAutorizedUser) {
     throw new CustomFail("unauthorized");
@@ -101,7 +101,7 @@ async function updateCoinsEarned(req, res) {
  * @description update user's role by admin
  * @access admin
  */
-async function updateUserRole(req, res) {
+async function updateUserRoleController(req, res) {
   const updatedUser = await catchDbErrors(
     UserModel.findByIdAndUpdate(
       req.params.id,
@@ -118,7 +118,7 @@ async function updateUserRole(req, res) {
  * @description get all users
  * @access admin
  */
-async function getAllUsers(req, res) {
+async function getAllUsersController(req, res) {
   const users = await catchDbErrors(UserModel.find());
   if (!users || users.length === 0) {
     throw new CustomFail("No users found");
@@ -132,7 +132,7 @@ async function getAllUsers(req, res) {
  * @desc   Get users that have not made any orders
  * @access Admin
  */
-async function getUsersWithNoOrder(req, res) {
+async function getUsersWithNoOrderController(req, res) {
   const users = await catchDbErrors(UserModel.find());
   if (!users || users.length === 0) {
     throw new CustomFail("No users found");
@@ -159,7 +159,7 @@ async function getUsersWithNoOrder(req, res) {
  * @description get coordinators
  * @access admin
  */
-async function getCoordinators(req, res) {
+async function getCoordinatorsController(req, res) {
   const coordinators = await catchDbErrors(
     UserModel.find({ role: "coordinator" })
   );
@@ -175,7 +175,7 @@ async function getCoordinators(req, res) {
  * @description get ambassadors
  * @access admin
  */
-async function getAmbassadors(req, res) {
+async function getAmbassadorsController(req, res) {
   const ambassadors = await catchDbErrors(
     UserModel.find({ role: "ambassador" })
   );
@@ -191,7 +191,7 @@ async function getAmbassadors(req, res) {
  * @description get users
  * @access admin
  */
-async function getUsers(req, res) {
+async function getUsersController(req, res) {
   const users = await catchDbErrors(UserModel.find({ role: "user" }));
   if (!users || users.length === 0) {
     throw new CustomFail("No users found");
@@ -205,7 +205,7 @@ async function getUsers(req, res) {
  * @description delete user
  * @access admin
  */
-async function deleteUser(req, res) {
+async function deleteUserController(req, res) {
   const user = await catchDbErrors(UserModel.findByIdAndDelete(req.params.id));
   if (!user) {
     throw new CustomFail("User not found");
@@ -219,7 +219,7 @@ async function deleteUser(req, res) {
  * @description get users that their birthday is in this month
  * @access admin
  */
-async function getUsersWithBirthday(req, res) {
+async function getUsersWithBirthdayController(req, res) {
   const users = await catchDbErrors(UserModel.find());
   if (!users || users.length === 0) {
     throw new CustomFail("No users found");
@@ -229,9 +229,7 @@ async function getUsersWithBirthday(req, res) {
   const today = new Date();
   for (const user of users) {
     const userBirthday = new Date(user.dateOfBirth);
-    if (
-      userBirthday.getMonth() === today.getMonth()
-    ) {
+    if (userBirthday.getMonth() === today.getMonth()) {
       usersWithBirthday.push(user);
     }
   }
@@ -243,16 +241,50 @@ async function getUsersWithBirthday(req, res) {
   res.json(new CustomSuccess(usersWithBirthday));
 }
 
+/**
+ * @method get
+ * @route : ~/api/user/unassignedcoordinators
+ * @desc  : get coordinators that are not assigned to any group
+ * @access : admin
+ */
+async function getUnassignedCoordinatorsController(req, res) {
+  const coordinators = await catchDbErrors(
+    UserModel.find({ role: "coordinator", groupId: null })
+  );
+  if (!coordinators || coordinators.length === 0) {
+    throw new CustomFail("No unassigned coordinators found");
+  }
+  res.json(new CustomSuccess(coordinators));
+}
+
+/**
+ * @method get
+ * @route : ~/api/user/unassignedambassadors
+ * @desc  : get ambassadors that are not assigned to any group
+ * @access : admin
+ */
+async function getUnassignedAmbassadorsController(req, res) {
+  const ambassadors = await catchDbErrors(
+    UserModel.find({ role: "ambassador", groupId: null })
+  );
+  if (!ambassadors || ambassadors.length === 0) {
+    throw new CustomFail("No unassigned ambassadors found");
+  }
+  res.json(new CustomSuccess(ambassadors));
+}
+
 module.exports = {
   userUpdateProfileController,
-  updateUserImage,
-  updateCoinsEarned,
-  updateUserRole,
-  getAllUsers,
-  getUsersWithNoOrder,
-  getCoordinators,
-  getAmbassadors,
-  getUsers,
-  deleteUser,
-  getUsersWithBirthday,
+  updateUserImageController,
+  updateCoinsEarnedController,
+  updateUserRoleController,
+  getAllUsersController,
+  getUsersWithNoOrderController,
+  getCoordinatorsController,
+  getAmbassadorsController,
+  getUsersController,
+  deleteUserController,
+  getUsersWithBirthdayController,
+  getUnassignedCoordinatorsController,
+  getUnassignedAmbassadorsController,
 };

@@ -2,7 +2,7 @@ const {
   postNewDonationHistoryController,
   getAllDonationHistoriesController,
   getUserDonationHistoriesController,
-  getSingleDonationHistory,
+  getSingleDonationHistoryController,
   deleteDonationHistoryByAdminController,
   getDonationHistoriesByDateController,
   getTopUsersBasedOnDonationHistoriesController,
@@ -58,7 +58,7 @@ donationHistoryRouter.get(
 donationHistoryRouter.get(
   "/:id",
   asyncHandler(verifyUser),
-  asyncHandler(getSingleDonationHistory)
+  asyncHandler(getSingleDonationHistoryController)
 );
 
 /**

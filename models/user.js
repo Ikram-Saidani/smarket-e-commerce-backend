@@ -1,4 +1,4 @@
-const { Schema, model } = require("mongoose");
+const { Schema, model,Types } = require("mongoose");
 const bcrypt = require("bcryptjs");
 const validator = require("validator");
 
@@ -52,6 +52,12 @@ const userSchema = new Schema(
       enum: ["admin", "coordinator", "ambassador", "user"],
       default: "user",
     },
+    groupId: {
+      type: Types.ObjectId,
+      ref: "group",
+      default: null,
+    },
+    discountEarnedWithGroup: { type: Number, default: 0 },
     coinsEarned: {
       type: Number,
       default: 0,

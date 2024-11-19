@@ -8,7 +8,7 @@ const UserModel = require("../models/user");
 /**
  * @method post
  * @route : ~/api/order/postorder
- * @desc  : post new order and notify admin if stock is low, also update paymentTotal
+ * @desc  : Post a new order, apply user discounts automatically, notify admin if stock is low, and update paymentTotal.
  * @access : user
  */
 async function postNewOrderController(req, res) {
@@ -21,44 +21,56 @@ async function postNewOrderController(req, res) {
     );
   }
 
+  // Initialize total payment
+  let paymentTotal = 0;
+  let discountUsed = 0;
+
+  // Process each ordered product
   for (const item of orderedProducts) {
     const product = await catchDbErrors(ProductModel.findById(item.productId));
-    if (!product) {
+    if (!product)
       throw new CustomFail(`Product with ID ${item.productId} not found.`);
-    }
 
+    // Check and update stock
     if (product.countInStock < item.quantity) {
       throw new CustomFail(`Insufficient stock for product: ${product.name}`);
     }
-  }
 
-  for (const item of orderedProducts) {
-    const product = await catchDbErrors(ProductModel.findById(item.productId));
     product.countInStock -= item.quantity;
-
     await catchDbErrors(product.save());
 
+    // Notify admin if stock is low
     if (product.countInStock < 5) {
-      const existingNotification = await NotificationModel.findOne({
+      const notificationExists = await NotificationModel.exists({
         message: `Product ${product.name} is running out of stock.`,
       });
 
-      if (!existingNotification) {
+      if (!notificationExists) {
         const adminUser = await UserModel.findOne({ role: "admin" });
-        const newNotification = new NotificationModel({
-          userId: adminUser._id,
-          message: `Product ${product.name} is running out of stock.`,
-        });
-        await catchDbErrors(newNotification.save());
+        if (adminUser) {
+          await catchDbErrors(
+            NotificationModel.create({
+              userId: adminUser._id,
+              message: `Product ${product.name} is running out of stock.`,
+            })
+          );
+        }
       }
     }
+
+    // Calculate total price for the order
+    paymentTotal += item.totalPrice;
   }
 
-  let paymentTotal = 0;
-  orderedProducts.forEach((item) => {
-    paymentTotal += item.totalPrice;
-  });
+  // Apply user discount if available
+  if (user.discountEarnedWithGroup > 0) {
+    discountUsed = Math.min(user.discountEarnedWithGroup, paymentTotal);
+    paymentTotal -= discountUsed;
+    user.discountEarnedWithGroup -= discountUsed;
+    await catchDbErrors(user.save());
+  }
 
+  // Create new order
   const newOrder = await catchDbErrors(
     OrderModel.create({
       userId: user._id,
@@ -69,12 +81,27 @@ async function postNewOrderController(req, res) {
       status: "pending",
     })
   );
-
-  if (!newOrder) {
+  if (!newOrder)
     throw new CustomFail("Failed to create a new order. Please try again.");
+
+  // Notify user about applied discount
+  if (discountUsed > 0) {
+    await catchDbErrors(
+      NotificationModel.create({
+        userId: user._id,
+        message: `Your ${discountUsed} TND earned with your group was successfully applied to this order.`,
+      })
+    );
   }
 
-  res.json(new CustomSuccess(newOrder));
+  // Send response
+  res.json(
+    new CustomSuccess({
+      message: "Order placed successfully.",
+      order: newOrder,
+      discountUsed,
+    })
+  );
 }
 
 /**
@@ -120,7 +147,7 @@ async function getuserOrdersController(req, res) {
  * @desc  : get single order
  * @access : user admin
  */
-async function getSingleOrder(req, res) {
+async function getSingleOrderController(req, res) {
   const order = await catchDbErrors(
     OrderModel.findById(req.params.id).populate({
       path: "orderedProducts",
@@ -307,7 +334,7 @@ async function getTopUsersBasedOnPaymentTotalController(req, res) {
 module.exports = {
   getAllOrdersController,
   getuserOrdersController,
-  getSingleOrder,
+  getSingleOrderController,
   updateOrderStatusController,
   postNewOrderController,
   deleteOrderController,

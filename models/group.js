@@ -1,18 +1,20 @@
+const { Schema, model,Types } = require("mongoose");
+
 const groupSchema = new Schema(
   {
     admin: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: "user",
       required: true,
     },
     coordinator: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: "user",
       required: true,
     },
     ambassadors: [
       {
-        type: Schema.Types.ObjectId,
+        type: Types.ObjectId,
         ref: "user",
       },
     ],
@@ -20,4 +22,6 @@ const groupSchema = new Schema(
   { timestamps: true, versionKey: false }
 );
 
-const Group = model("group", groupSchema);
+const GroupModel = model("group", groupSchema);
+
+module.exports = GroupModel;

@@ -1,4 +1,5 @@
 const NotificationModel = require("../models/notification");
+const OrderModel = require("../models/order");
 const RoleRequestModel = require("../models/roleRequest");
 const UserModel = require("../models/user");
 const catchDbErrors = require("../utils/catchDbErros");
@@ -55,6 +56,22 @@ async function wishToBeAmbassadorOrCoordinatorController(req, res) {
     return res.json(
       new CustomFail(`You are already in the role of ${currentRole}`)
     );
+  }
+  if (currentRole === "ambassador") {
+    const ambassadorOrders = await catchDbErrors(
+      OrderModel.find({ userId, status: "done" })
+    );
+    const total = ambassadorOrders.reduce(
+      (acc, order) => acc + order.paymentTotal,
+      0
+    );
+    if (total < 5000) {
+      return res.json(
+        new CustomFail(
+          "You must have a total order greater than 5000 to be a coordinator"
+        )
+      );
+    }
   }
 
   const newRequest = new RoleRequestModel({

@@ -1,8 +1,13 @@
-const {getProductCommentsController, postNewCommentController, deleteCommentsController, adminDeleteCommentController} = require('../controllers/comment')
-const asyncHandler = require('../utils/asyncHandler')
-const CommentRouter=require('express').Router()
-const verifyAdmin=require('../utils/verifyAdmin')
-const verifyUser = require('../utils/verifyUser')
+const {
+  getProductCommentsController,
+  postNewCommentController,
+  deleteCommentsController,
+  adminDeleteCommentController,
+} = require("../controllers/comment");
+const asyncHandler = require("../utils/asyncHandler");
+const CommentRouter = require("express").Router();
+const verifyAdmin = require("../utils/verifyAdmin");
+const verifyUser = require("../utils/verifyUser");
 
 /**
  * @method post
@@ -10,7 +15,11 @@ const verifyUser = require('../utils/verifyUser')
  * @description post a comment for a product
  * @access user
  */
-CommentRouter.post('/addcomment/:productId',asyncHandler(verifyUser),asyncHandler(postNewCommentController))
+CommentRouter.post(
+  "/addcomment/:productId",
+  asyncHandler(verifyUser),
+  asyncHandler(postNewCommentController)
+);
 
 /**
  * @method get
@@ -18,15 +27,22 @@ CommentRouter.post('/addcomment/:productId',asyncHandler(verifyUser),asyncHandle
  * @description get all comments for a product
  * @access visitor
  */
-CommentRouter.get('/getcomments/:productId',asyncHandler(getProductCommentsController))
+CommentRouter.get(
+  "/getcomments/:productId",
+  asyncHandler(getProductCommentsController)
+);
 
 /**
  * @method delete
  * @endpoint  ~/api/comment/delete/:id
  * @description delete user's Comments
- * @access user 
+ * @access user
  */
-CommentRouter.delete('/delete/:id',asyncHandler(verifyUser),asyncHandler(deleteCommentsController))
+CommentRouter.delete(
+  "/delete/:id",
+  asyncHandler(verifyUser),
+  asyncHandler(deleteCommentsController)
+);
 
 /**
  * @method delete
@@ -34,6 +50,10 @@ CommentRouter.delete('/delete/:id',asyncHandler(verifyUser),asyncHandler(deleteC
  * @description delete Comments by admin
  * @access admin
  */
-CommentRouter.delete('/deleteadmin/:id',asyncHandler(verifyAdmin),asyncHandler(adminDeleteCommentController))
+CommentRouter.delete(
+  "/deleteadmin/:id",
+  asyncHandler(verifyAdmin),
+  asyncHandler(adminDeleteCommentController)
+);
 
-module.exports=CommentRouter
+module.exports = CommentRouter;

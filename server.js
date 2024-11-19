@@ -14,7 +14,7 @@ const NotificationRouter = require("./routes/notification");
 const OrderRouter = require("./routes/order");
 const RoleRequestRouter = require("./routes/roleRequest");
 const DonationHistoryRouter = require("./routes/donationHistory");
-
+const GroupRouter = require("./routes/group");
 const app = express();
 
 //app middelwares
@@ -32,6 +32,7 @@ app.use("/api/comment", CommentRouter);
 app.use("/api/notification", NotificationRouter);
 app.use("/api/roleRequest", RoleRequestRouter);
 app.use("/api/user", UserRouter);
+app.use("/api/group",GroupRouter);
 
 // 404 handler
 app.all(

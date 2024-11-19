@@ -3,7 +3,7 @@ const {
   getuserOrdersController,
   updateOrderStatusController,
   postNewOrderController,
-  getSingleOrder,
+  getSingleOrderController,
   deleteOrderController,
   deleteOrderByAdminController,
   getOrderByStatusController,
@@ -19,7 +19,7 @@ const verifyUser = require("../utils/verifyUser");
 /**
  * @method post
  * @route : ~/api/order/postorder
- * @desc  : post new order and notify admin if stock is low, also update paymentTotal
+ * @desc  : Post a new order, apply user discounts automatically, notify admin if stock is low, and update paymentTotal.
  * @access : user
  */
 OrderRouter.post(
@@ -61,7 +61,7 @@ OrderRouter.get(
 OrderRouter.get(
   "/:id",
   asyncHandler(verifyUser),
-  asyncHandler(getSingleOrder)
+  asyncHandler(getSingleOrderController)
 );
 
 /**
