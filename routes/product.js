@@ -9,11 +9,11 @@ const {
   getNewProductsController,
   getPopularProductsController,
   getSingleProductController,
-  getPopularProductsByCategoryController,
   postNewProductController,
   updateProductController,
   deleteProductController,
   getProductsCountInStockController,
+  getProductsWithTitleSearchController,
 } = require("../controllers/product");
 const multer = require("multer");
 const verifyAdmin = require("../utils/verifyAdmin");
@@ -32,6 +32,16 @@ const upload = multer({
  * @access : visitor
  */
 ProductRouter.get("/", asyncHandler(getAllProductsController));
+
+/**
+ * @method get
+ * @route : ~/api/product/search?title=product
+ * @desc  : get products with title search
+ * @access : visitor
+ */
+ProductRouter.get("/search?title=product",
+  asyncHandler(getProductsWithTitleSearchController)
+);
 
 /**
  * @method get
@@ -89,17 +99,6 @@ ProductRouter.get("/newproducts", asyncHandler(getNewProductsController));
  * @access : visitor
  */
 ProductRouter.get("/popular", asyncHandler(getPopularProductsController));
-
-/**
- * @method get
- * @route : ~/api/product/category/:category/popular
- * @desc  : get 6 popular products by category
- * @access : visitor
- */
-ProductRouter.get(
-  "/category/:category/popular",
-  asyncHandler(getPopularProductsByCategoryController)
-);
 
 /**
  * @method get

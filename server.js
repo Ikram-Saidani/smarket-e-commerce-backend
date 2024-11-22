@@ -6,7 +6,7 @@ const { CustomFail } = require("./utils/customResponses");
 const ProductRouter = require("./routes/product");
 const path = require("path");
 
-// var cors = require("cors");
+var cors = require("cors");
 const UserRouter = require("./routes/user");
 const authRouter = require("./routes/auth");
 const CommentRouter = require("./routes/comment");
@@ -22,17 +22,17 @@ app.use(express.static(path.join(__dirname, "productsImages")));
 app.use(express.static(path.join(__dirname, "uploads")));
 app.use(express.json());
 
-// app.use(cors());
+app.use(cors());
 
 app.use("/api/product", ProductRouter);
-app.use("/api/auth", authRouter);
-app.use("/api/order", OrderRouter);
-app.use("/api/donationHistory", DonationHistoryRouter);
-app.use("/api/comment", CommentRouter);
-app.use("/api/notification", NotificationRouter);
-app.use("/api/roleRequest", RoleRequestRouter);
-app.use("/api/user", UserRouter);
-app.use("/api/group",GroupRouter);
+// app.use("/api/auth", authRouter);
+// app.use("/api/order", OrderRouter);
+// app.use("/api/donationHistory", DonationHistoryRouter);
+// app.use("/api/comment", CommentRouter);
+// app.use("/api/notification", NotificationRouter);
+// app.use("/api/roleRequest", RoleRequestRouter);
+// app.use("/api/user", UserRouter);
+// app.use("/api/group",GroupRouter);
 
 // 404 handler
 app.all(

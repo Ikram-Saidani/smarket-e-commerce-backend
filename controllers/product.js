@@ -20,6 +20,38 @@ async function getAllProductsController(req, res) {
 
 /**
  * @method get
+ * @route : ~/api/product/search?title=product
+ * @desc  : Get products with title search
+ * @access : visitor
+ */
+async function getProductsWithTitleSearchController(req, res) {
+  const { title } = req.query;
+
+  // Check if the title parameter exists
+  if (!title || title.trim().length === 0) {
+    throw new CustomFail("Title query parameter is required.");
+  }
+
+  const products = await catchDbErrors(
+    ProductModel.find({
+      title: { $regex: title, $options: "i" },
+    },{_id:0})
+  );
+
+  if (products.length === 0) {
+    throw new CustomFail("No products found matching the search term.");
+  }
+
+  res.json(
+    new CustomSuccess({
+      message: "Products found successfully.",
+      products,
+    })
+  );
+}
+
+/**
+ * @method get
  * @route : ~/api/product/pagination?page=1&limit=10
  * @desc  : get all products with pagination queries
  * @access : visitor
@@ -136,23 +168,6 @@ async function getPopularProductsController(req, res) {
 
 /**
  * @method get
- * @route : ~/api/product/category/:category/popular
- * @desc  : get 6 popular products by category
- * @access : visitor
- */
-async function getPopularProductsByCategoryController(req, res) {
-  const { category } = req.params;
-  const products = await catchDbErrors(
-    ProductModel.find({ category }).sort({ saleCount: -1 }).limit(6)
-  );
-  if (!products.length) {
-    throw new CustomFail("No popular products found");
-  }
-  res.json(new CustomSuccess(products));
-}
-
-/**
- * @method get
  * @route : ~/api/product/:id
  * @desc  : get single product with id
  * @access : visitor
@@ -178,49 +193,75 @@ async function postNewProductController(req, res) {
     throw new CustomFail("Validation Error: Please check your inputs");
   }
 
-  const { category, size, specifications, expiryDate, ingredients, oldPrice, discount, shoeSize } = req.body;
+  const {
+    category,
+    size,
+    specifications,
+    expiryDate,
+    ingredients,
+    oldPrice,
+    discount,
+    shoeSize,
+  } = req.body;
 
-   // Ensure image is uploaded
-   if (!req.file) {
+  // Ensure image is uploaded
+  if (!req.file) {
     throw new CustomFail("Image is required for creating a product.");
   }
-// Upload image to Cloudinary
-let cloudinaryImageUrl;
-try {
-  const uploadedImage = cloudinary.uploader.upload_stream({
-    folder: "products",
-  }, (err, result) => {
-    if (err) {
-      throw new CustomFail("Failed to upload image to Cloudinary.");
-    }
-    return result.secure_url;
-  }).end(req.file.buffer); // Pass the image buffer from Multer
-  cloudinaryImageUrl = uploadedImage.secure_url;
-} catch (error) {
-  throw new CustomFail("Cloudinary upload failed.");
-}
+  // Upload image to Cloudinary
+  let cloudinaryImageUrl;
+  try {
+    const uploadedImage = cloudinary.uploader
+      .upload_stream(
+        {
+          folder: "products",
+        },
+        (err, result) => {
+          if (err) {
+            throw new CustomFail("Failed to upload image to Cloudinary.");
+          }
+          return result.secure_url;
+        }
+      )
+      .end(req.file.buffer); // Pass the image buffer from Multer
+    cloudinaryImageUrl = uploadedImage.secure_url;
+  } catch (error) {
+    throw new CustomFail("Cloudinary upload failed.");
+  }
 
   switch (category) {
     case "fashion":
       if (!Array.isArray(size)) {
         throw new CustomFail("Fashion products require a valid size array.");
       }
-      req.body.countInStock = size.reduce((total, item) => total + item.quantity, 0);
+      req.body.countInStock = size.reduce(
+        (total, item) => total + item.quantity,
+        0
+      );
       break;
     case "footwear":
       if (!Array.isArray(shoeSize)) {
-        throw new CustomFail("Footwear products require a valid shoeSize array.");
+        throw new CustomFail(
+          "Footwear products require a valid shoeSize array."
+        );
       }
-      req.body.countInStock = shoeSize.reduce((total, item) => total + item.quantity, 0);
+      req.body.countInStock = shoeSize.reduce(
+        (total, item) => total + item.quantity,
+        0
+      );
       break;
     case "electronics":
       if (!specifications || typeof specifications !== "object") {
-        throw new CustomFail("Electronics require specifications as a key-value map.");
+        throw new CustomFail(
+          "Electronics require specifications as a key-value map."
+        );
       }
       break;
     case "beauty":
       if (!ingredients || !Array.isArray(ingredients)) {
-        throw new CustomFail("Beauty products require a valid ingredients array.");
+        throw new CustomFail(
+          "Beauty products require a valid ingredients array."
+        );
       }
       break;
     case "groceries":
@@ -233,15 +274,17 @@ try {
   }
   //calculate price with old price and discount
   if (oldPrice && discount) {
-    req.body.price = parseFloat((oldPrice - (oldPrice * discount) / 100).toFixed(2));
-  } else { 
+    req.body.price = parseFloat(
+      (oldPrice - (oldPrice * discount) / 100).toFixed(2)
+    );
+  } else {
     req.body.price = oldPrice;
   }
   //calculate coins with price
   if (req.body.price) {
-    req.body.coins = Math.floor((req.body.price *3)/2);
+    req.body.coins = Math.floor((req.body.price * 3) / 2);
   }
-  
+
   const newProduct = await catchDbErrors(
     ProductModel.create({
       ...req.body,
@@ -264,7 +307,16 @@ try {
 async function updateProductController(req, res) {
   console.log(req.body);
 
-  const { discount, oldPrice, size, shoeSize, ingredients, expiryDate, specifications, image } = req.body;
+  const {
+    discount,
+    oldPrice,
+    size,
+    shoeSize,
+    ingredients,
+    expiryDate,
+    specifications,
+    image,
+  } = req.body;
 
   const product = await catchDbErrors(ProductModel.findById(req.params.id));
   if (!product) {
@@ -275,7 +327,9 @@ async function updateProductController(req, res) {
   if (oldPrice || discount) {
     const updatedOldPrice = oldPrice || product.oldPrice;
     const updatedDiscount = discount || product.discount;
-    product.price = parseFloat((updatedOldPrice - (updatedOldPrice * updatedDiscount) / 100).toFixed(2));
+    product.price = parseFloat(
+      (updatedOldPrice - (updatedOldPrice * updatedDiscount) / 100).toFixed(2)
+    );
     product.coins = Math.floor((product.price * 3) / 2);
   }
 
@@ -294,7 +348,9 @@ async function updateProductController(req, res) {
   // Handle shoeSize array (for "footwear")
   if (shoeSize && Array.isArray(shoeSize)) {
     shoeSize.forEach((newShoeSize) => {
-      const existingShoeSize = product.shoeSize.find((s) => s.name === newShoeSize.name);
+      const existingShoeSize = product.shoeSize.find(
+        (s) => s.name === newShoeSize.name
+      );
       if (existingShoeSize) {
         existingShoeSize.quantity = newShoeSize.quantity; // Update quantity
       } else {
@@ -376,13 +432,13 @@ async function getProductsCountInStockController(req, res) {
 
 module.exports = {
   getAllProductsController,
+  getProductsWithTitleSearchController,
   getAllProductsPaginationController,
   getProductsByCategoryController,
   getProductsByCategoryPaginationController,
   getFeaturedProductsController,
   getNewProductsController,
   getPopularProductsController,
-  getPopularProductsByCategoryController,
   getSingleProductController,
   postNewProductController,
   updateProductController,
