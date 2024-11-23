@@ -27,15 +27,17 @@ async function getAllProductsController(req, res) {
 async function getProductsWithTitleSearchController(req, res) {
   const { title } = req.query;
 
-  // Check if the title parameter exists
   if (!title || title.trim().length === 0) {
     throw new CustomFail("Title query parameter is required.");
   }
 
   const products = await catchDbErrors(
-    ProductModel.find({
-      title: { $regex: title, $options: "i" },
-    },{_id:0})
+    ProductModel.find(
+      {
+        title: { $regex: title, $options: "i" },
+      },
+      { _id: 0 }
+    )
   );
 
   if (products.length === 0) {
@@ -52,17 +54,12 @@ async function getProductsWithTitleSearchController(req, res) {
 
 /**
  * @method get
- * @route : ~/api/product/pagination?page=1&limit=10
+ * @route : ~/api/product/pagination?page=page&limit=limit
  * @desc  : get all products with pagination queries
  * @access : visitor
  */
 async function getAllProductsPaginationController(req, res) {
-  const {
-    page = 1,
-    limit = 10,
-    sortBy = "createdAt",
-    order = "desc",
-  } = req.query;
+  const { page, limit, sortBy = "createdAt", order = "desc" } = req.query;
 
   const skip = (page - 1) * limit;
   const sortOrder = order === "desc" ? -1 : 1;
@@ -78,7 +75,11 @@ async function getAllProductsPaginationController(req, res) {
     throw new CustomFail("No products found");
   }
 
-  res.json(new CustomSuccess(products));
+  const totalCount = await catchDbErrors(ProductModel.countDocuments());
+  res.json({
+    data: products,
+    totalCount,
+  });
 }
 
 /**
@@ -93,28 +94,6 @@ async function getProductsByCategoryController(req, res) {
   if (!products.length) {
     throw new CustomFail("No products found", 404);
   }
-  res.json(new CustomSuccess(products));
-}
-/**
- * @method get
- * @route : ~/api/product/category/:category/pagination?page=1&limit=10
- * @desc  : get products by category with pagination queries
- * @access : visitor
- */
-async function getProductsByCategoryPaginationController(req, res) {
-  const { category } = req.params;
-  const { page = 1, limit = 10 } = req.query;
-
-  const products = await catchDbErrors(
-    ProductModel.find({ category })
-      .skip((page - 1) * limit)
-      .limit(limit)
-  );
-
-  if (!products.length) {
-    throw new CustomFail("No products found in this category");
-  }
-
   res.json(new CustomSuccess(products));
 }
 
@@ -188,7 +167,6 @@ async function getSingleProductController(req, res) {
  */
 async function postNewProductController(req, res) {
   const result = validationResult(req);
-  //if no validation errors
   if (!result.isEmpty()) {
     throw new CustomFail("Validation Error: Please check your inputs");
   }
@@ -305,8 +283,7 @@ async function postNewProductController(req, res) {
  * @access : admin
  */
 async function updateProductController(req, res) {
-  console.log(req.body);
-
+  
   const {
     discount,
     oldPrice,
@@ -435,7 +412,6 @@ module.exports = {
   getProductsWithTitleSearchController,
   getAllProductsPaginationController,
   getProductsByCategoryController,
-  getProductsByCategoryPaginationController,
   getFeaturedProductsController,
   getNewProductsController,
   getPopularProductsController,

@@ -1,14 +1,13 @@
 const DonationHistoryModel = require("../models/donationHistory");
 const catchDbErrors = require("../utils/catchDbErros");
 const { CustomFail, CustomSuccess } = require("../utils/customResponses");
-const ProductModel = require("../models/product");
 const NotificationModel = require("../models/notification");
 const UserModel = require("../models/user");
 
 /**
  * @method post
  * @route : ~/api/donationHistory/postDonationHistory
- * @desc  : Post a new donationHistory, update coinsDonated, check coinsEarned, and notify admin if stock is low.
+ * @desc  : Post a new donationHistory, update coinsDonated, check coinsEarned, and notify user that his donation is done.
  * @access : user
  */
 async function postNewDonationHistoryController(req, res) {
@@ -19,54 +18,27 @@ async function postNewDonationHistoryController(req, res) {
     throw new CustomFail("orderDonation is required and cannot be empty.");
   }
 
-  let coinsEarned = user.coinsEarned || 0;
-
   const totalCoinsNeeded = orderDonation.reduce(
     (sum, item) => sum + item.totalCoins,
     0
   );
 
-  if (coinsEarned < totalCoinsNeeded) {
-    throw new CustomFail("Insufficient coinsEarned to complete this donation.");
+  if ((user.coinsEarned || 0) < totalCoinsNeeded) {
+    throw new CustomFail("Insufficient coins to complete this donation.");
   }
 
-  const notifications = [];
-  const productUpdates = orderDonation.map(async (item) => {
-    const product = await catchDbErrors(ProductModel.findById(item.productId));
-    if (!product) {
-      throw new CustomFail(`Product with ID ${item.productId} not found.`);
-    }
+  const updatedCoinsEarned = user.coinsEarned - totalCoinsNeeded;
+  const updateUserResult = await catchDbErrors(
+    UserModel.findByIdAndUpdate(
+      user._id,
+      { coinsEarned: updatedCoinsEarned },
+      { new: true, runValidators: true }
+    )
+  );
 
-    if (product.countInStock < item.quantity) {
-      throw new CustomFail(`Insufficient stock for product: ${product.name}`);
-    }
-
-    product.countInStock -= item.quantity;
-    await catchDbErrors(product.save());
-
-    if (product.countInStock < 5) {
-      const existingNotification = await NotificationModel.findOne({
-        message: `Product ${product.name} is running out of stock.`,
-      });
-
-      if (!existingNotification) {
-        const adminUser = await UserModel.findOne({ role: "admin" });
-        notifications.push({
-          userId: adminUser._id,
-          message: `Product ${product.name} is running out of stock.`,
-        });
-      }
-    }
-  });
-
-  await Promise.all(productUpdates);
-
-  if (notifications.length > 0) {
-    await NotificationModel.insertMany(notifications);
+  if (!updateUserResult) {
+    throw new CustomFail("Failed to update user coins. Please try again.");
   }
-
-  coinsEarned -= totalCoinsNeeded;
-  await catchDbErrors(UserModel.findByIdAndUpdate(user._id, { coinsEarned }));
 
   const newDonationHistory = await catchDbErrors(
     DonationHistoryModel.create({
@@ -77,12 +49,28 @@ async function postNewDonationHistoryController(req, res) {
   );
 
   if (!newDonationHistory) {
-    throw new CustomFail(
-      "Failed to create a new donationHistory. Please try again."
-    );
+    throw new CustomFail("Failed to create a new donation record.");
   }
 
-  res.json(new CustomSuccess(newDonationHistory));
+  const newNotification = await catchDbErrors(
+    NotificationModel.create({
+      userId: user._id,
+      message: "Your donation was successful.",
+    })
+  );
+
+  if (!newNotification) {
+    throw new CustomFail("Failed to create a notification for the user.");
+  }
+
+  res.status(201).json({
+    status: "success",
+    data: {
+      message: "Donation successfully recorded!",
+      donationHistory: newDonationHistory,
+      remainingCoins: updatedCoinsEarned,
+    },
+  });
 }
 
 /**

@@ -1,7 +1,6 @@
 const asyncHandler = require("../utils/asyncHandler");
 const ProductRouter = require("express").Router();
 const {
-  getProductsByCategoryPaginationController,
   getAllProductsPaginationController,
   getProductsByCategoryController,
   getAllProductsController,
@@ -45,7 +44,7 @@ ProductRouter.get("/search?title=product",
 
 /**
  * @method get
- * @route : ~/api/product/pagination?page=1&limit=10
+ * @route : ~/api/product/pagination?page=page&limit=limit
  * @desc  : get all products with pagination queries
  * @access : visitor
  */
@@ -63,17 +62,6 @@ ProductRouter.get(
 ProductRouter.get(
   "/category/:category",
   asyncHandler(getProductsByCategoryController)
-);
-
-/**
- * @method get
- * @route : ~/api/product/category/:category/pagination?page=1&limit=10
- * @desc  : get products by category with pagination queries
- * @access : visitor
- */
-ProductRouter.get(
-  "/category/:category/pagination",
-  asyncHandler(getProductsByCategoryPaginationController)
 );
 
 /**

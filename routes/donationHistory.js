@@ -16,7 +16,7 @@ const verifyUser = require("../utils/verifyUser");
 /**
  * @method post
  * @route : ~/api/donationHistory/postDonationHistory
- * @desc  : Post a new donationHistory, update coinsDonated, check earnedCoins, and notify admin if stock is low.
+ * @desc  : Post a new donationHistory, update coinsDonated, check coinsEarned, and notify user that his donation is done.
  * @access : user
  */
 donationHistoryRouter.post(

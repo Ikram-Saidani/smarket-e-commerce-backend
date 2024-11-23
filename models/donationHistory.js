@@ -7,7 +7,7 @@ const donationHistorySchema = new Schema(
       {
         productDonated: {
           type: Types.ObjectId,
-          ref: "product",
+          ref: "helpandhope",
           required: true,
         },
         quantity: { type: Number, required: true, min: 1 },
