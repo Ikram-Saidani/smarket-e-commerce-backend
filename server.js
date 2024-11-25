@@ -25,16 +25,16 @@ app.use(express.json());
 
 app.use(cors());
 
-// app.use("/api/auth", authRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/user", UserRouter);
+app.use("/api/group",GroupRouter);
 app.use("/api/product", ProductRouter);
 app.use("/api/helpAndHope",HelpAndHopeRouter)
 app.use("/api/comment", CommentRouter);
-// app.use("/api/order", OrderRouter);
-// app.use("/api/donationHistory", DonationHistoryRouter);
-// app.use("/api/notification", NotificationRouter);
-// app.use("/api/roleRequest", RoleRequestRouter);
-// app.use("/api/user", UserRouter);
-// app.use("/api/group",GroupRouter);
+app.use("/api/order", OrderRouter);
+app.use("/api/donationHistory", DonationHistoryRouter);
+app.use("/api/notification", NotificationRouter);
+app.use("/api/roleRequest", RoleRequestRouter);
 
 // 404 handler
 app.all(

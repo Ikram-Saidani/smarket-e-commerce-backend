@@ -84,6 +84,10 @@ async function postNewOrderController(req, res) {
   if (!newOrder)
     throw new CustomFail("Failed to create a new order. Please try again.");
 
+  //update user earned coins in the user collection
+  user.earnedCoins += (paymentTotal * 0.1);
+  await catchDbErrors(user.save());
+
   // Notify user about applied discount
   if (discountUsed > 0) {
     await catchDbErrors(

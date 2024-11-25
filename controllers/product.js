@@ -32,12 +32,9 @@ async function getProductsWithTitleSearchController(req, res) {
   }
 
   const products = await catchDbErrors(
-    ProductModel.find(
-      {
-        title: { $regex: title, $options: "i" },
-      },
-      { _id: 0 }
-    )
+    ProductModel.find({
+      title: { $regex: title, $options: "i" },
+    })
   );
 
   if (products.length === 0) {
@@ -59,27 +56,48 @@ async function getProductsWithTitleSearchController(req, res) {
  * @access : visitor
  */
 async function getAllProductsPaginationController(req, res) {
-  const { page, limit, sortBy = "createdAt", order = "desc" } = req.query;
-
+  const {
+    page,
+    limit,
+    minPrice,
+    maxPrice,
+    minRating,
+    sortBy = "createdAt",
+    order = "desc",
+  } = req.query;
+  console.log(req.query);
   const skip = (page - 1) * limit;
   const sortOrder = order === "desc" ? -1 : 1;
-
   const products = await catchDbErrors(
-    ProductModel.find()
+    ProductModel.find({
+      price: { $gte: Number(minPrice), $lte: Number(maxPrice) },
+    "rate.rating": { $gte: Number(minRating) },
+    })
       .skip(skip)
       .limit(Number(limit))
       .sort({ [sortBy]: sortOrder })
   );
 
+  const totalCount = await catchDbErrors(
+    ProductModel.countDocuments({
+      price: { $gte: minPrice, $lte: maxPrice },
+      "rate.rating": { $gte: minRating },
+    })
+  );
   if (!products.length) {
     throw new CustomFail("No products found");
   }
+  const min = await catchDbErrors(ProductModel.findOne().sort({ price: 1 }));
 
-  const totalCount = await catchDbErrors(ProductModel.countDocuments());
-  res.json({
-    data: products,
-    totalCount,
-  });
+  const max = await catchDbErrors(ProductModel.findOne().sort({ price: -1 }));
+  res.json(
+    new CustomSuccess({
+      data: products,
+      totalCount,
+      minimunPrice: min.price,
+      maximunPrice: max.price,
+    })
+  );
 }
 
 /**
@@ -283,7 +301,6 @@ async function postNewProductController(req, res) {
  * @access : admin
  */
 async function updateProductController(req, res) {
-  
   const {
     discount,
     oldPrice,

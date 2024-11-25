@@ -38,7 +38,7 @@ ProductRouter.get("/", asyncHandler(getAllProductsController));
  * @desc  : get products with title search
  * @access : visitor
  */
-ProductRouter.get("/search?title=product",
+ProductRouter.get("/search",
   asyncHandler(getProductsWithTitleSearchController)
 );
 
