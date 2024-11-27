@@ -12,7 +12,7 @@ const commentSchema = new Schema(
       ref: "user",
       required: true,
     },
-    text: {
+    comment: {
       type: String,
       required: true,
       trim: true,

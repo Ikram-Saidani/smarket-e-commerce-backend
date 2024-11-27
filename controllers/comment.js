@@ -1,5 +1,6 @@
 const CommentModel = require("../models/comment");
 const ProductModel = require("../models/product");
+const UserModel = require("../models/user");
 const catchDbErrors = require("../utils/catchDbErros");
 const { CustomFail, CustomSuccess } = require("../utils/customResponses");
 
@@ -14,22 +15,33 @@ async function postNewCommentController(req, res) {
     ProductModel.findById(req.params.productId)
   );
   if (!product) {
-    throw new CustomFail("product not found");
+    throw new CustomFail("Product not found");
+  }
+  const { comment, rating } = req.body;
+
+  if (!comment || typeof rating !== "number") {
+    return res.status(400).json({ message: "Comment and rating are required" });
   }
   const newComment = await catchDbErrors(
     CommentModel.create({
       userId: req.user._id,
       productId: req.params.productId,
-      ...req.body,
+      comment,
+      rating,
     })
   );
-  if (req.body.rating > 0) {
-    const totalRating = product.rate.rating * product.rate.ratingCount + req.body.rating;
+  if (rating > 0) {
+    const totalRating =
+      product.rate.rating * product.rate.ratingCount + rating;
     const newRating = totalRating / (product.rate.ratingCount + 1);
     product.rate.rating = newRating;
     product.rate.ratingCount += 1;
     await product.save();
   }
+  const userInformation = await catchDbErrors(
+    UserModel.findById(req.user._id, "name avatar")
+  );
+  newComment.userId = userInformation;
   res.json(new CustomSuccess(newComment));
 }
 
@@ -64,7 +76,6 @@ async function deleteCommentsController(req, res) {
   if (!comment) {
     throw new CustomFail("comment not found");
   }
-  console.log(req.user._id.toString() == comment.userId.toString());
 
   if (req.user._id.toString() !== comment.userId.toString()) {
     throw new CustomFail("unauthorized");

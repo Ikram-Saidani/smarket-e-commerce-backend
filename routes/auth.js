@@ -25,7 +25,7 @@ authRouter.post("/login",asyncHandler(loginController))
 /**
  * @method post
  * @endpoint  ~/api/auth/loginadmin
- * @description login admin, coordinator, ambassador
+ * @description login admin
  * @accsess visitor
  *  */
 authRouter.post("/loginadmin",asyncHandler(loginAdminController))

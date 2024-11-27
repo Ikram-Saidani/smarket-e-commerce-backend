@@ -3,31 +3,34 @@ const catchDbErrors = require("../utils/catchDbErros");
 const { CustomFail, CustomSuccess } = require("../utils/customResponses");
 const NotificationModel = require("../models/notification");
 const UserModel = require("../models/user");
+const HelpAndHopeModel = require("../models/helpAndHope");
 
 /**
  * @method post
  * @route : ~/api/donationHistory/postDonationHistory
- * @desc  : Post a new donationHistory, update coinsDonated, check coinsEarned, and notify user that his donation is done.
+ * @desc  : Post a new donationHistory, check coinsEarned, and notify the user that their donation is done.
  * @access : user
  */
 async function postNewDonationHistoryController(req, res) {
-  const { orderDonation } = req.body;
+  const { productDonated } = req.body;  // Product sent from frontend
   const user = req.user;
-
-  if (!orderDonation || !orderDonation.length) {
-    throw new CustomFail("orderDonation is required and cannot be empty.");
+  if (!productDonated) {
+    throw new CustomFail("productDonated is required and cannot be empty.");
   }
 
-  const totalCoinsNeeded = orderDonation.reduce(
-    (sum, item) => sum + item.totalCoins,
-    0
-  );
+  const product = await catchDbErrors(HelpAndHopeModel.findById(productDonated));
 
-  if ((user.coinsEarned || 0) < totalCoinsNeeded) {
+  if (!product) {
+    throw new CustomFail("Product does not exist.");
+  }
+
+  const totalCoinsNeeded = product.coins;
+  if ((user.coinsEarned) < totalCoinsNeeded) {
     throw new CustomFail("Insufficient coins to complete this donation.");
   }
 
   const updatedCoinsEarned = user.coinsEarned - totalCoinsNeeded;
+
   const updateUserResult = await catchDbErrors(
     UserModel.findByIdAndUpdate(
       user._id,
@@ -43,8 +46,7 @@ async function postNewDonationHistoryController(req, res) {
   const newDonationHistory = await catchDbErrors(
     DonationHistoryModel.create({
       userId: user._id,
-      orderDonation,
-      coinsDonated: totalCoinsNeeded,
+      productDonated,
     })
   );
 
@@ -55,7 +57,7 @@ async function postNewDonationHistoryController(req, res) {
   const newNotification = await catchDbErrors(
     NotificationModel.create({
       userId: user._id,
-      message: "Your donation was successful.",
+      message: `Thank you for your donation of ${totalCoinsNeeded} coins!`,
     })
   );
 
@@ -68,7 +70,7 @@ async function postNewDonationHistoryController(req, res) {
     data: {
       message: "Donation successfully recorded!",
       donationHistory: newDonationHistory,
-      remainingCoins: updatedCoinsEarned,
+      remainingCoins: updateUserResult.coinsEarned,
     },
   });
 }
@@ -81,7 +83,7 @@ async function postNewDonationHistoryController(req, res) {
  */
 async function getAllDonationHistoriesController(req, res) {
   const donationHistories = await catchDbErrors(
-    DonationHistoryModel.find().populate("userId")
+    DonationHistoryModel.find().populate("userId productDonated")
   );
   if (!donationHistories.length) {
     throw new CustomFail("no donationHistories found");
@@ -98,13 +100,7 @@ async function getAllDonationHistoriesController(req, res) {
 async function getUserDonationHistoriesController(req, res) {
   const user = req.user;
   const userdonationHistories = await catchDbErrors(
-    DonationHistoryModel.find({ userId: user._id }).populate({
-      path: "orderDonation",
-      populate: {
-        path: "productId",
-        model: "product",
-      },
-    })
+    DonationHistoryModel.find({ userId: user._id }).populate("productDonated")
   );
   if (!userdonationHistories.length) {
     throw new CustomFail("no donationHistories");
@@ -120,12 +116,9 @@ async function getUserDonationHistoriesController(req, res) {
  */
 async function getSingleDonationHistoryController(req, res) {
   const donationHistory = await catchDbErrors(
-    DonationHistoryModel.findById(req.params.id).populate({
-      path: "orderDonation",
-      populate: {
-        path: "productId",
-      },
-    })
+    DonationHistoryModel.findById(req.params.id).populate(
+     "productDonated"
+    )
   );
   if (!donationHistory) {
     throw new CustomFail("donationHistory not found");
@@ -217,7 +210,7 @@ async function getTopUsersBasedOnDonationHistoriesController(req, res) {
  * @access admin
  */
 async function getTopUsersBasedOnCoinsDonatedController(req, res) {
-  const donationHistories = await catchDbErrors(DonationHistoryModel.find());
+  const donationHistories = await catchDbErrors(DonationHistoryModel.find().populate("userId productDonated"));
   if (!donationHistories.length) {
     throw new CustomFail("no donationHistories found");
   }
@@ -227,9 +220,8 @@ async function getTopUsersBasedOnCoinsDonatedController(req, res) {
     if (!users[donationHistory.userId]) {
       users[donationHistory.userId] = 0;
     }
-    users[donationHistory.userId] += donationHistory.coinsDonated;
+    users[donationHistory.userId] += donationHistory.productDonated.coins;
   }
-
   const topUsers = Object.entries(users)
     .sort((a, b) => b[1] - a[1])
     .map(([userId, coinsDonated]) => ({

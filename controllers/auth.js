@@ -60,7 +60,7 @@ async function loginController(req, res) {
 /**
  * @method post
  * @endpoint  ~/api/auth/loginadmin
- * @description login admin, coordinator, ambassador
+ * @description login admin
  * @accsess visitor
  *  */
 async function loginAdminController(req, res) {
@@ -80,7 +80,7 @@ async function loginAdminController(req, res) {
     throw new CustomFail("somthing went wrong");
   }
 
-  if (!existUser.role==="admin" || !existUser.role==="coordinator" || !existUser.role==="ambassador") {
+  if (!existUser.role==="admin") {
     throw new CustomFail("somthing went wrong");
   }
 
