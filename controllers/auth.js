@@ -20,7 +20,18 @@ async function registerController(req, res) {
   if (existEmail) {
     throw new CustomFail("Email is already in use");
   }
-  const newUser = new UserModel(req.body);
+  let avatar;
+  if (req.body.gender === "male") {
+    avatar = `/men-avatar.png`;
+  } else if (req.body.gender === "female") {
+    avatar = `/woman-avatar.png`;
+  } else {
+    avatar = `/men-avatar.png`;
+  }
+  const newUser = new UserModel({
+    ...req.body,
+    avatar,
+  });
   await catchDbErrors(newUser.save());
   const hash = randomBytes(16).toString("hex");
   main(newUser.email, hash).catch((e) => console.log("Email error:", e));
@@ -38,11 +49,11 @@ async function loginController(req, res) {
   let existUser = await catchDbErrors(
     UserModel.findOne({ email: req.body.email })
   );
-  
+
   if (!existUser) {
     throw new CustomFail("somthing went wrong ");
   }
- 
+
   const isMatchPassword = bcrypt.compareSync(
     req.body.password,
     existUser.password
@@ -80,7 +91,7 @@ async function loginAdminController(req, res) {
     throw new CustomFail("somthing went wrong");
   }
 
-  if (!existUser.role==="admin") {
+  if (!existUser.role === "admin") {
     throw new CustomFail("somthing went wrong");
   }
 

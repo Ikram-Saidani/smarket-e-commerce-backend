@@ -16,13 +16,12 @@ const {
 const asyncHandler = require("../utils/asyncHandler");
 const verifyAdmin = require("../utils/verifyAdmin");
 const verifyUser = require("../utils/verifyUser");
-const multer = require("multer");
 const UserRouter = require("express").Router();
-
+const multer = require("multer");
+const fs = require("fs");
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const userDir = `uploads/avatars/${req.user._id}`;
-
     fs.mkdirSync(userDir, { recursive: true });
     cb(null, userDir);
   },

@@ -48,29 +48,31 @@ async function userUpdateProfileController(req, res) {
  */
 async function updateUserImageController(req, res) {
   const file = req.file;
-  const isAutorizedUser = req.user._id.toString() === req.params.id;
   const userId = req.params.id;
-  if (!isAutorizedUser) {
-    throw new CustomFail("unauthorized");
+  const isAuthorizedUser = req.user._id == userId;
+  if (!isAuthorizedUser) {
+    throw new CustomFail("Unauthorized");
   }
-  const user = await UserModel.findById(userId);
+  const user = await catchDbErrors(UserModel.findById(userId))
   if (!user) {
     throw new CustomFail("User not found");
   }
-  if (user.avatar && user.avatar !== "/images.png") {
+  if (user.avatar) {
     const oldAvatarPath = path.join(__dirname, "../", user.avatar);
-    fs.unlink(oldAvatarPath, (err) => {
-      if (err) console.error("Failed to delete old avatar:", err);
-    });
+    if (fs.existsSync(oldAvatarPath)) {
+      fs.unlink(oldAvatarPath, (err) => {
+        if (err) console.error("Failed to delete old avatar:", err);
+      });
+    }
   }
+
   const updatedUser = await catchDbErrors(
     UserModel.findByIdAndUpdate(
       userId,
-      { avatar: `/uploads/avatars/${userId}/${file.filename}` },
+      { avatar: `/avatars/${userId}/${file.filename}` },
       { new: true }
     )
   );
-
   res.json(new CustomSuccess(updatedUser));
 }
 

@@ -10,6 +10,6 @@ const notificationSchema = new Schema(
   },
   { timestamps: true, versionKey: false }
 );
-notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400});// 1 day
+notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400 }); // 1 day
 const NotificationModel = model("notification", notificationSchema);
- module.exports = NotificationModel;
+module.exports = NotificationModel;

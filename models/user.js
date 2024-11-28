@@ -62,7 +62,7 @@ const userSchema = new Schema(
       type: Number,
       default: 0,
     },
-    avatar: { type: String, default: "/images.png" },
+    avatar: { type: String , default:"/men-avatar.png"    },
   },
   {
     timestamps: true,
