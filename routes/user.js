@@ -12,6 +12,7 @@ const {
   getUsersWithBirthdayController,
   getUnassignedCoordinatorsController,
   getUnassignedAmbassadorsController,
+  getUserDetailsController,
 } = require("../controllers/user");
 const asyncHandler = require("../utils/asyncHandler");
 const verifyAdmin = require("../utils/verifyAdmin");
@@ -197,6 +198,19 @@ UserRouter.get(
   "/unassignedambassadors",
   asyncHandler(verifyAdmin),
   asyncHandler(getUnassignedAmbassadorsController)
+);
+
+/**
+ * @method get
+ * @route : ~/api/user/me
+ * @desc  : get user details
+ * @access : user
+ */
+UserRouter.get(
+  "/me",
+  asyncHandler(verifyUser),
+  asyncHandler( getUserDetailsController
+  )
 );
 
 module.exports = UserRouter;

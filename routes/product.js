@@ -55,12 +55,12 @@ ProductRouter.get(
 
 /**
  * @method get
- * @route : ~/api/product/category/:category
+ * @route : ~/api/product/category
  * @desc  : get products by category
  * @access : visitor
  */
 ProductRouter.get(
-  "/category/:category",
+  "/category",
   asyncHandler(getProductsByCategoryController)
 );
 

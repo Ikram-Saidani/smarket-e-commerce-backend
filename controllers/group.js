@@ -1,4 +1,5 @@
 const GroupModel = require("../models/group");
+const UserModel = require("../models/user");
 const catchDbErrors = require("../utils/catchDbErros");
 const { CustomFail, CustomSuccess } = require("../utils/customResponses");
 
@@ -250,6 +251,26 @@ async function getAllGroupsController(req, res) {
   res.json(new CustomSuccess(groups));
 }
 
+/**
+ * @method get
+ * @route : ~/api/group/:id
+ * @desc  : Get list of group members for one of the members
+ * @access : user
+ */
+async function getGroupMembersController(req, res) {
+  const { id } = req.params;
+  const group = await catchDbErrors(GroupModel.findById(id));
+  if (!group) {
+    throw new CustomFail("Group not found.");
+  }
+
+  const groupMembers = await catchDbErrors(
+    UserModel.find({ _id: { $in: [group.coordinator, ...group.ambassadors] } })
+  );
+
+  res.json(new CustomSuccess(groupMembers));
+}
+
 module.exports = {
   createGroupController,
   updateAmbassadorController,
@@ -257,4 +278,5 @@ module.exports = {
   getTotalSalesController,
   deleteAmbassadorController,
   getAllGroupsController,
+  getGroupMembersController,
 };

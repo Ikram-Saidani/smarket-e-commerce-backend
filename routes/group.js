@@ -5,11 +5,12 @@ const {
   getTotalSalesController,
   deleteAmbassadorController,
   getAllGroupsController,
+  getGroupMembersController,
 } = require("../controllers/group");
 const GroupRouter = require("express").Router();
 const asyncHandler = require("../utils/asyncHandler");
 const verifyAdmin = require("../utils/verifyAdmin");
-
+const verifyUser = require("../utils/verifyUser");
 
 /**
  * @method post
@@ -81,6 +82,18 @@ GroupRouter.get(
   "/",
   asyncHandler(verifyAdmin),
   asyncHandler(getAllGroupsController)
+);
+
+/**
+ * @method get
+ * @route : ~/api/group/:id
+ * @desc  : Get list of group members for one of the members
+ * @access : user
+ */
+GroupRouter.get(
+  "/:id",
+  asyncHandler(verifyUser),
+  asyncHandler(getGroupMembersController)
 );
 
 module.exports = GroupRouter;

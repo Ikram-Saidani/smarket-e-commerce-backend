@@ -15,7 +15,9 @@ async function userUpdateProfileController(req, res) {
   if (!isAutorizedUser) {
     throw new CustomFail("unauthorized access");
   }
+  //don't update the password
   let updatedUser;
+  delete req.body.password;
   if (!req.body.address) {
     updatedUser = await catchDbErrors(
       UserModel.findByIdAndUpdate(req.user._id, req.body, {
@@ -23,13 +25,12 @@ async function userUpdateProfileController(req, res) {
         runValidators: true,
       })
     );
-  } else {
+  } else {  
     updatedUser = await catchDbErrors(
       UserModel.findByIdAndUpdate(req.user._id, {
         $push: { address: req.body.address },
       })
     );
-    delete req.body.address;
     updatedUser = await catchDbErrors(
       UserModel.findByIdAndUpdate(req.user._id, req.body, {
         new: true,
@@ -53,7 +54,7 @@ async function updateUserImageController(req, res) {
   if (!isAuthorizedUser) {
     throw new CustomFail("Unauthorized");
   }
-  const user = await catchDbErrors(UserModel.findById(userId))
+  const user = await catchDbErrors(UserModel.findById(userId));
   if (!user) {
     throw new CustomFail("User not found");
   }
@@ -83,7 +84,7 @@ async function updateUserImageController(req, res) {
  * @access user
  */
 async function updateCoinsEarnedController(req, res) {
-  const isAutorizedUser = req.user._id.toString() === req.params.id;
+  const isAutorizedUser = req.user._id == req.params.id;
   if (!isAutorizedUser) {
     throw new CustomFail("unauthorized");
   }
@@ -275,6 +276,20 @@ async function getUnassignedAmbassadorsController(req, res) {
   res.json(new CustomSuccess(ambassadors));
 }
 
+/**
+ * @method get
+ * @route : ~/api/user/me
+ * @desc  : get user details
+ * @access : user
+ */
+async function getUserDetailsController(req, res) {
+  const user = await catchDbErrors(UserModel.findById(req.user.id).select("-password"));
+  if (!user) {
+    throw new CustomFail("User not found");
+  }
+  res.json(new CustomSuccess(user));
+}
+
 module.exports = {
   userUpdateProfileController,
   updateUserImageController,
@@ -288,5 +303,5 @@ module.exports = {
   deleteUserController,
   getUsersWithBirthdayController,
   getUnassignedCoordinatorsController,
-  getUnassignedAmbassadorsController,
+  getUnassignedAmbassadorsController,getUserDetailsController
 };

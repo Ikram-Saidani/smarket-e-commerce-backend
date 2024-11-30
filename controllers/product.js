@@ -65,13 +65,12 @@ async function getAllProductsPaginationController(req, res) {
     sortBy = "createdAt",
     order = "desc",
   } = req.query;
-  console.log(req.query);
   const skip = (page - 1) * limit;
   const sortOrder = order === "desc" ? -1 : 1;
   const products = await catchDbErrors(
     ProductModel.find({
       price: { $gte: Number(minPrice), $lte: Number(maxPrice) },
-    "rate.rating": { $gte: Number(minRating) },
+      "rate.rating": { $gte: Number(minRating) },
     })
       .skip(skip)
       .limit(Number(limit))
@@ -88,7 +87,6 @@ async function getAllProductsPaginationController(req, res) {
     throw new CustomFail("No products found");
   }
   const min = await catchDbErrors(ProductModel.findOne().sort({ price: 1 }));
-
   const max = await catchDbErrors(ProductModel.findOne().sort({ price: -1 }));
   res.json(
     new CustomSuccess({
@@ -102,17 +100,48 @@ async function getAllProductsPaginationController(req, res) {
 
 /**
  * @method get
- * @route : ~/api/product/category/:category
+ * @route : ~/api/product/category?category=category&minPrice=0&maxPrice=1000&minRating=0
  * @desc  : get products by category
  * @access : visitor
  */
 async function getProductsByCategoryController(req, res) {
-  const { category } = req.params;
-  const products = await catchDbErrors(ProductModel.find({ category }));
+  const {
+    category,
+    minPrice,
+    maxPrice,
+    minRating,
+    sortBy = "createdAt",
+    order = "desc",
+  } = req.query;
+  const sortOrder = order === "desc" ? -1 : 1;
+
+  const products = await catchDbErrors(
+    ProductModel.find({
+      category,
+      price: { $gte: Number(minPrice), $lte: Number(maxPrice) },
+      "rate.rating": { $gte: Number(minRating) },
+    }).sort({ [sortBy]: sortOrder })
+  );
+  const totalCount = await catchDbErrors(
+    ProductModel.countDocuments({
+      category,
+      price: { $gte: minPrice, $lte: maxPrice },
+      "rate.rating": { $gte: minRating },
+    })
+  );
   if (!products.length) {
     throw new CustomFail("No products found", 404);
   }
-  res.json(new CustomSuccess(products));
+  const min = await catchDbErrors(ProductModel.findOne({category}).sort({ price: 1 }));
+  const max = await catchDbErrors(ProductModel.findOne({category}).sort({ price: -1 }));
+  res.json(
+    new CustomSuccess({
+      data: products,
+      totalCount,
+      minimunPrice: min.price,
+      maximunPrice: max.price,
+    })
+  );
 }
 
 /**
