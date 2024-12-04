@@ -105,6 +105,7 @@ async function postNewOrderController(req, res) {
       address,
       paymentMode,
       paymentTotal,
+      discountApplied: discountUsed,
       status: "pending",
     })
   );
@@ -131,7 +132,7 @@ async function postNewOrderController(req, res) {
     new CustomSuccess({
       message: "Order placed successfully.",
       order: newOrder,
-      discountUsed,
+      discountApplied:discountUsed,
     })
   );
 }
