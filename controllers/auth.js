@@ -64,8 +64,8 @@ async function loginController(req, res) {
   }
 
   const token = jwtGenerateToken(existUser._id);
-  existUser.password = "";
-  res.json(new CustomSuccess({ token: token, user: existUser }));
+  const user = await UserModel.findById(existUser._id).select("-password");
+  res.json(new CustomSuccess({ token: token, user: user }));
 }
 
 /**

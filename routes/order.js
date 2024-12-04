@@ -1,6 +1,6 @@
 const {
   getAllOrdersController,
-  getuserOrdersController,
+  getUserOrdersController,
   updateOrderStatusController,
   postNewOrderController,
   getSingleOrderController,
@@ -49,7 +49,7 @@ OrderRouter.get(
 OrderRouter.get(
   "/userorders",
   asyncHandler(verifyUser),
-  asyncHandler(getuserOrdersController)
+  asyncHandler(getUserOrdersController)
 );
 
 /**

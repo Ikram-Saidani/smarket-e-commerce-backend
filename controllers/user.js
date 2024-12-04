@@ -34,7 +34,7 @@ async function userUpdateProfileController(req, res) {
     updatedUser = await catchDbErrors(
       UserModel.findByIdAndUpdate(req.user._id, req.body, {
         new: true,
-      })
+      }).select("-password")
     );
   }
 

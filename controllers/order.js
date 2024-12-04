@@ -14,18 +14,17 @@ const UserModel = require("../models/user");
 async function postNewOrderController(req, res) {
   const { orderedProducts, address, paymentMode } = req.body;
   const user = req.user;
-
   if (!orderedProducts || !address || !paymentMode) {
     throw new CustomFail(
       "All fields (orderedProducts, address, paymentMode) are required."
     );
   }
-
-  // Initialize total payment
+  // Initialize total payment and total price
   let paymentTotal = 0;
   let discountUsed = 0;
+  let totalPrice = 0;
 
-  // Process each ordered product
+  // Calculate total price of ordered products
   for (const item of orderedProducts) {
     const product = await catchDbErrors(ProductModel.findById(item.productId));
     if (!product)
@@ -37,7 +36,12 @@ async function postNewOrderController(req, res) {
     }
 
     product.countInStock -= item.quantity;
-    await catchDbErrors(product.save());
+    await catchDbErrors(
+      ProductModel.updateOne(
+        { _id: item.productId },
+        { countInStock: product.countInStock }
+      )
+    );
 
     // Notify admin if stock is low
     if (product.countInStock < 5) {
@@ -58,18 +62,41 @@ async function postNewOrderController(req, res) {
       }
     }
 
-    // Calculate total price for the order
-    paymentTotal += item.totalPrice;
+    totalPrice += item.quantity * product.price;
   }
 
+  // Initialize payment total as the total price
+  paymentTotal = totalPrice;
   // Apply user discount if available
   if (user.discountEarnedWithGroup > 0) {
-    discountUsed = Math.min(user.discountEarnedWithGroup, paymentTotal);
-    paymentTotal -= discountUsed;
-    user.discountEarnedWithGroup -= discountUsed;
-    await catchDbErrors(user.save());
+    discountUsed += user.discountEarnedWithGroup;
+    paymentTotal = paymentTotal - (paymentTotal * user.discountEarnedWithGroup) / 100;
+    user.discountEarnedWithGroup = 0;
+    await catchDbErrors(
+      UserModel.updateOne({ _id: user._id }, { discountEarnedWithGroup: 0 })
+    );
   }
 
+  // Apply 5% discount for birth month
+  if (user.dateOfBirth) {
+    const userBirthday = new Date(user.dateOfBirth);
+    const today = new Date();
+    if (userBirthday.getMonth() === today.getMonth()) {
+      discountUsed += 5;
+      paymentTotal -= (paymentTotal * 5) / 100;
+    }
+  }
+
+  // Apply 20% discount for first order
+  const userOrders = await catchDbErrors(OrderModel.find({ userId: user._id }));
+  if (!userOrders.length) {
+    discountUsed += 20;
+    paymentTotal -= (paymentTotal * 20) / 100;
+  }
+  //add shipping cost
+  paymentTotal += paymentTotal < 500 ? 5 : 0;
+  // Final total payment
+  paymentTotal = Math.max(0, paymentTotal);
   // Create new order
   const newOrder = await catchDbErrors(
     OrderModel.create({
@@ -81,22 +108,23 @@ async function postNewOrderController(req, res) {
       status: "pending",
     })
   );
-  if (!newOrder)
+  if (!newOrder) {
     throw new CustomFail("Failed to create a new order. Please try again.");
+  }
 
   //update user earned coins in the user collection
-  user.earnedCoins += (paymentTotal * 0.1);
-  await catchDbErrors(user.save());
+  user.coinsEarned += paymentTotal * 0.1;
+  await catchDbErrors(
+    UserModel.updateOne({ _id: user._id }, { coinsEarned: user.coinsEarned })
+  );
 
-  // Notify user about applied discount
-  if (discountUsed > 0) {
-    await catchDbErrors(
-      NotificationModel.create({
-        userId: user._id,
-        message: `Your ${discountUsed} TND earned with your group was successfully applied to this order.`,
-      })
-    );
-  }
+  // Notify user about applied discount and the earned coins
+  await catchDbErrors(
+    NotificationModel.create({
+      userId: user._id,
+      message: `You have earned ${paymentTotal * 0.1} coins for this order. You have used ${discountUsed}% discount.`,
+    })
+  );
 
   // Send response
   res.json(
@@ -128,7 +156,7 @@ async function getAllOrdersController(req, res) {
  * @desc  : get user orders
  * @access : user admin
  */
-async function getuserOrdersController(req, res) {
+async function getUserOrdersController(req, res) {
   const user = req.user;
   const userOrders = await catchDbErrors(
     OrderModel.find({ userId: user._id }).populate({
@@ -337,7 +365,7 @@ async function getTopUsersBasedOnPaymentTotalController(req, res) {
 
 module.exports = {
   getAllOrdersController,
-  getuserOrdersController,
+  getUserOrdersController,
   getSingleOrderController,
   updateOrderStatusController,
   postNewOrderController,
