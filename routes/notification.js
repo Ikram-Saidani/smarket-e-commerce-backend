@@ -86,7 +86,7 @@ NotificationRouter.post(
 /**
  * @method post
  * @endpoint  ~/api/notification/birthday
- * @description notify users that they earned 100coins because of their birthday month
+ * @description notify users that they earned 5%discount because of their birthday month
  * @access admin
  */
 NotificationRouter.post(

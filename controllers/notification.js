@@ -181,7 +181,7 @@ async function notifyBirthdayCoinsController(req, res) {
     const currentMonth = new Date().getMonth();
 
     if (birthdayMonth === currentMonth) {
-      const message = `Happy birthday! You earned 100 coins as a gift from us.`;
+      const message = `Happy birthday! You earned 5% discount as a gift from us.`;
       await catchDbErrors(
         NotificationModel.create({
           userId: user._id,

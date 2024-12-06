@@ -13,6 +13,7 @@ const {
   getUnassignedCoordinatorsController,
   getUnassignedAmbassadorsController,
   getUserDetailsController,
+  updateLastSpinTimeController,
 } = require("../controllers/user");
 const asyncHandler = require("../utils/asyncHandler");
 const verifyAdmin = require("../utils/verifyAdmin");
@@ -209,8 +210,19 @@ UserRouter.get(
 UserRouter.get(
   "/me",
   asyncHandler(verifyUser),
-  asyncHandler( getUserDetailsController
-  )
+  asyncHandler(getUserDetailsController)
+);
+
+/**
+ * @method put
+ * @route : ~/api/user/lastspinTime
+ * @desc  : update the last spin time of the user date now + 24 hours
+ * @access : user
+ */
+UserRouter.put(
+  "/lastspinTime",
+  asyncHandler(verifyUser),
+  asyncHandler(updateLastSpinTimeController)
 );
 
 module.exports = UserRouter;

@@ -25,7 +25,7 @@ async function userUpdateProfileController(req, res) {
         runValidators: true,
       })
     );
-  } else {  
+  } else {
     updatedUser = await catchDbErrors(
       UserModel.findByIdAndUpdate(req.user._id, {
         $push: { address: req.body.address },
@@ -283,11 +283,30 @@ async function getUnassignedAmbassadorsController(req, res) {
  * @access : user
  */
 async function getUserDetailsController(req, res) {
-  const user = await catchDbErrors(UserModel.findById(req.user.id).select("-password"));
+  const user = await catchDbErrors(
+    UserModel.findById(req.user.id).select("-password")
+  );
   if (!user) {
     throw new CustomFail("User not found");
   }
   res.json(new CustomSuccess(user));
+}
+
+/**
+ * @method put
+ * @route : ~/api/user/lastspinTime
+ * @desc  : update the last spin time of the user date now + 24 hours
+ * @access : user
+ */
+async function updateLastSpinTimeController(req, res) {
+  const updatedUser = await catchDbErrors(
+    UserModel.findByIdAndUpdate(
+      req.user.id,
+      { lastSpinTime: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+      { new: true }
+    )
+  );
+  res.json(new CustomSuccess(updatedUser));
 }
 
 module.exports = {
@@ -303,5 +322,7 @@ module.exports = {
   deleteUserController,
   getUsersWithBirthdayController,
   getUnassignedCoordinatorsController,
-  getUnassignedAmbassadorsController,getUserDetailsController
+  getUnassignedAmbassadorsController,
+  getUserDetailsController,
+  updateLastSpinTimeController,
 };

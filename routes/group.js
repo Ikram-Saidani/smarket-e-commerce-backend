@@ -62,12 +62,12 @@ GroupRouter.delete(
 
 /**
  * @method get
- * @route : ~/api/group/totalsales/:month
+ * @route : ~/api/group/totalsales
  * @desc  : Get Total Sales for Group in a Month
  * @access : admin
  */
 GroupRouter.get(
-  "/totalsales/:month",
+  "/totalsales",
   asyncHandler(verifyAdmin),
   asyncHandler(getTotalSalesController)
 );

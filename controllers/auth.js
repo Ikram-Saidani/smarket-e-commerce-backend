@@ -91,14 +91,14 @@ async function loginAdminController(req, res) {
     throw new CustomFail("somthing went wrong");
   }
 
-  if (!existUser.role === "admin") {
+  if (existUser.role !== "admin") {
     throw new CustomFail("somthing went wrong");
   }
 
   const token = jwtGenerateToken(existUser._id);
-  existUser.password = "";
+  const user = await UserModel.findById(existUser._id).select("-password");
 
-  res.json(new CustomSuccess({ token: token, user: existUser }));
+  res.json(new CustomSuccess({ token: token, user: user }));
 }
 
 /**

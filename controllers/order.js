@@ -4,6 +4,7 @@ const { CustomFail, CustomSuccess } = require("../utils/customResponses");
 const ProductModel = require("../models/product");
 const NotificationModel = require("../models/notification");
 const UserModel = require("../models/user");
+const GroupModel = require("../models/group");
 
 /**
  * @method post
@@ -70,7 +71,8 @@ async function postNewOrderController(req, res) {
   // Apply user discount if available
   if (user.discountEarnedWithGroup > 0) {
     discountUsed += user.discountEarnedWithGroup;
-    paymentTotal = paymentTotal - (paymentTotal * user.discountEarnedWithGroup) / 100;
+    paymentTotal =
+      paymentTotal - (paymentTotal * user.discountEarnedWithGroup) / 100;
     user.discountEarnedWithGroup = 0;
     await catchDbErrors(
       UserModel.updateOne({ _id: user._id }, { discountEarnedWithGroup: 0 })
@@ -123,7 +125,9 @@ async function postNewOrderController(req, res) {
   await catchDbErrors(
     NotificationModel.create({
       userId: user._id,
-      message: `You have earned ${paymentTotal * 0.1} coins for this order. You have used ${discountUsed}% discount.`,
+      message: `You have earned ${
+        paymentTotal * 0.1
+      } coins for this order. You have used ${discountUsed}% discount.`,
     })
   );
 
@@ -132,7 +136,7 @@ async function postNewOrderController(req, res) {
     new CustomSuccess({
       message: "Order placed successfully.",
       order: newOrder,
-      discountApplied:discountUsed,
+      discountApplied: discountUsed,
     })
   );
 }

@@ -1,4 +1,6 @@
 const GroupModel = require("../models/group");
+const NotificationModel = require("../models/notification");
+const OrderModel = require("../models/order");
 const UserModel = require("../models/user");
 const catchDbErrors = require("../utils/catchDbErros");
 const { CustomFail, CustomSuccess } = require("../utils/customResponses");
@@ -146,21 +148,19 @@ async function deleteAmbassadorController(req, res) {
 
 /**
  * @method get
- * @route : ~/api/group/totalsales/:date
+ * @route : ~/api/group/totalsales
  * @desc  : Get Total Sales for Group in a Month and Notify Top Group
  * @access : admin
  */
 async function getTotalSalesController(req, res) {
-  const { date } = req.params;
+  const date = new Date();
+  const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+  const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+  const groups = await catchDbErrors(GroupModel.find());
 
-  const [year, month] = date.split("-");
-  const startOfMonth = new Date(`${year}-${month}-01T00:00:00Z`);
-  const endOfMonth = new Date(startOfMonth);
-  endOfMonth.setMonth(startOfMonth.getMonth() + 1);
-
-  const groups = await catchDbErrors(GroupModel.find({}))
-    .populate("coordinator ambassadors")
-    .exec();
+  const coordinatorIds = groups.map((group) => group.coordinator);
+  const ambassadorIds = [];
+  groups.forEach((group) => ambassadorIds.push(...group.ambassadors));
 
   let totalSalesData = [];
 
@@ -181,7 +181,6 @@ async function getTotalSalesController(req, res) {
 
     totalSalesData.push({
       groupId: group._id,
-      groupName: group.name,
       coordinator: group.coordinator,
       ambassadors: group.ambassadors,
       totalSales,
@@ -189,40 +188,29 @@ async function getTotalSalesController(req, res) {
   }
 
   totalSalesData.sort((a, b) => b.totalSales - a.totalSales);
-
   if (totalSalesData.length === 0) {
     throw new CustomFail("No sales data found for the given month.");
   }
 
   const topGroup = totalSalesData[0];
-
   const notifications = [];
-  if (topGroup.coordinator) {
-    notifications.push(
-      notifyUser(
-        topGroup.coordinator,
-        "Congratulations!",
-        `Your group (${topGroup.groupName}) achieved the highest total sales for ${date}. You've won a free marketing formation at Gomycode!`
-      )
-    );
-  }
-
-  for (const ambassador of topGroup.ambassadors) {
-    if (ambassador) {
-      ambassador.discountEarnedWithGroup += 500;
-      await ambassador.save();
-
-      notifications.push(
-        notifyUser(
-          ambassador,
-          "Congratulations!",
-          `Your group (${topGroup.groupName}) achieved the highest total sales for ${date}. You've earned 500 TND for your contributions!`
-        )
-      );
+  for (const group of groups) {
+    if (group._id.toString() === topGroup.groupId.toString()) {
+      notifications.push({
+        userId: group.coordinator,
+        message:
+          "Congratulations! Your group is the top selling group this month.",
+      });
+      group.ambassadors.forEach((ambassadorId) => {
+        notifications.push({
+          userId: ambassadorId,
+          message:
+            "Congratulations! Your group is the top selling group this month.",
+        });
+      });
     }
   }
-
-  await Promise.all(notifications);
+  await catchDbErrors(NotificationModel.insertMany(notifications));
 
   res.json(
     new CustomSuccess({

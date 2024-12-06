@@ -62,6 +62,9 @@ const userSchema = new Schema(
       type: Number,
       default: 0,
     },
+    lastSpinTime: {
+      type: Date,
+    },
     avatar: { type: String , default:"/men-avatar.png"    },
   },
   {
