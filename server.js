@@ -3,10 +3,10 @@ const { mongoose } = require("mongoose");
 require("dotenv").config();
 const asyncHandler = require("./utils/asyncHandler");
 const { CustomFail } = require("./utils/customResponses");
-const ProductRouter = require("./routes/product");
 const path = require("path");
 
 var cors = require("cors");
+const ProductRouter = require("./routes/product");
 const UserRouter = require("./routes/user");
 const authRouter = require("./routes/auth");
 const CommentRouter = require("./routes/comment");

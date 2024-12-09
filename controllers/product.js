@@ -132,8 +132,12 @@ async function getProductsByCategoryController(req, res) {
   if (!products.length) {
     throw new CustomFail("No products found", 404);
   }
-  const min = await catchDbErrors(ProductModel.findOne({category}).sort({ price: 1 }));
-  const max = await catchDbErrors(ProductModel.findOne({category}).sort({ price: -1 }));
+  const min = await catchDbErrors(
+    ProductModel.findOne({ category }).sort({ price: 1 })
+  );
+  const max = await catchDbErrors(
+    ProductModel.findOne({ category }).sort({ price: -1 })
+  );
   res.json(
     new CustomSuccess({
       data: products,
@@ -217,76 +221,69 @@ async function postNewProductController(req, res) {
   if (!result.isEmpty()) {
     throw new CustomFail("Validation Error: Please check your inputs");
   }
-
   const {
     category,
-    size,
-    specifications,
-    expiryDate,
-    ingredients,
     oldPrice,
     discount,
+    size,
     shoeSize,
+    specifications,
+    ingredients,
+    expiryDate,
   } = req.body;
-
-  // Ensure image is uploaded
   if (!req.file) {
     throw new CustomFail("Image is required for creating a product.");
   }
-  // Upload image to Cloudinary
+
   let cloudinaryImageUrl;
   try {
-    const uploadedImage = cloudinary.uploader
-      .upload_stream(
-        {
-          folder: "products",
-        },
-        (err, result) => {
-          if (err) {
-            throw new CustomFail("Failed to upload image to Cloudinary.");
-          }
-          return result.secure_url;
-        }
-      )
-      .end(req.file.buffer); // Pass the image buffer from Multer
-    cloudinaryImageUrl = uploadedImage.secure_url;
+    const cloudinaryResponse = await cloudinary.uploader.upload(req.file.path);
+    cloudinaryImageUrl = cloudinaryResponse.secure_url;
   } catch (error) {
+    console.error("Error during Cloudinary upload:", error); // Log the full error
     throw new CustomFail("Cloudinary upload failed.");
   }
 
   switch (category) {
     case "fashion":
-      if (!Array.isArray(size)) {
-        throw new CustomFail("Fashion products require a valid size array.");
+      if (typeof size === "string") {
+        req.body.size = JSON.parse(size);
       }
-      req.body.countInStock = size.reduce(
-        (total, item) => total + item.quantity,
+      req.body.countInStock = req.body.size.reduce(
+        (total, item) => total + (item.quantity || 0),
         0
       );
       break;
     case "footwear":
-      if (!Array.isArray(shoeSize)) {
-        throw new CustomFail(
-          "Footwear products require a valid shoeSize array."
-        );
+      if (typeof shoeSize === "string") {
+        req.body.shoeSize = JSON.parse(shoeSize);
       }
-      req.body.countInStock = shoeSize.reduce(
-        (total, item) => total + item.quantity,
+      req.body.countInStock = req.body.shoeSize.reduce(
+        (total, item) => total + (item.quantity || 0),
         0
       );
       break;
     case "electronics":
       if (!specifications || typeof specifications !== "object") {
-        throw new CustomFail(
-          "Electronics require specifications as a key-value map."
-        );
+        req.body.specifications = JSON.parse(specifications);
+        let specs = req.body.specifications.split(",");
+        let specKeys = [];
+        let specValues = [];
+        specs.forEach((spec) => {
+          let [key, value] = spec.split(":");
+          specKeys.push(key);
+          specValues.push(value);
+        });
+        req.body.specifications = specKeys.reduce((obj, key, index) => {
+          obj[key] = specValues[index];
+          return obj;
+        }, {});
       }
       break;
     case "beauty":
       if (!ingredients || !Array.isArray(ingredients)) {
-        throw new CustomFail(
-          "Beauty products require a valid ingredients array."
-        );
+        let ing = ingredients.split(",");
+        req.body.ingredients = ing;
       }
       break;
     case "groceries":
@@ -294,16 +291,20 @@ async function postNewProductController(req, res) {
         throw new CustomFail("Groceries require a valid expiry date.");
       }
       break;
+    case "bags":
+      break;
+    case "jewellery":
+      break;
     default:
       throw new CustomFail("Invalid product category provided.");
   }
   //calculate price with old price and discount
   if (oldPrice && discount) {
     req.body.price = parseFloat(
-      (oldPrice - (oldPrice * discount) / 100).toFixed(2)
+      (+oldPrice - (+oldPrice * +discount) / 100).toFixed(2)
     );
   } else {
-    req.body.price = oldPrice;
+    req.body.price = +oldPrice;
   }
   //calculate coins with price
   if (req.body.price) {
@@ -331,14 +332,14 @@ async function postNewProductController(req, res) {
  */
 async function updateProductController(req, res) {
   const {
-    discount,
-    oldPrice,
+    category,
     size,
-    shoeSize,
-    ingredients,
-    expiryDate,
     specifications,
-    image,
+    expiryDate,
+    ingredients,
+    oldPrice,
+    discount,
+    shoeSize,
   } = req.body;
 
   const product = await catchDbErrors(ProductModel.findById(req.params.id));
@@ -346,79 +347,81 @@ async function updateProductController(req, res) {
     throw new CustomFail("Product not found");
   }
 
-  // Update price and coins
-  if (oldPrice || discount) {
-    const updatedOldPrice = oldPrice || product.oldPrice;
-    const updatedDiscount = discount || product.discount;
-    product.price = parseFloat(
-      (updatedOldPrice - (updatedOldPrice * updatedDiscount) / 100).toFixed(2)
-    );
-    product.coins = Math.floor((product.price * 3) / 2);
-  }
-
-  // Handle size array (for "fashion")
-  if (size && Array.isArray(size)) {
-    size.forEach((newSize) => {
-      const existingSize = product.size.find((s) => s.name === newSize.name);
-      if (existingSize) {
-        existingSize.quantity = newSize.quantity; // Update quantity if size exists
-      } else {
-        product.size.push(newSize); // Add new size if it doesn't exist
+  switch (category) {
+    case "fashion":
+      if (!Array.isArray(size)) {
+        throw new CustomFail("Fashion products require a valid size array.");
       }
-    });
-  }
-
-  // Handle shoeSize array (for "footwear")
-  if (shoeSize && Array.isArray(shoeSize)) {
-    shoeSize.forEach((newShoeSize) => {
-      const existingShoeSize = product.shoeSize.find(
-        (s) => s.name === newShoeSize.name
+      req.body.countInStock = size.reduce(
+        (total, item) => total + (+item.quantity || 0),
+        0
       );
-      if (existingShoeSize) {
-        existingShoeSize.quantity = newShoeSize.quantity; // Update quantity
-      } else {
-        product.shoeSize.push(newShoeSize); // Add new shoeSize
+      break;
+
+    case "footwear":
+      if (!Array.isArray(shoeSize)) {
+        throw new CustomFail(
+          "Footwear products require a valid shoeSize array."
+        );
       }
-    });
-  }
+      req.body.countInStock = shoeSize.reduce(
+        (total, item) => total + (+item.quantity || 0),
+        0
+      );
+      break;
 
-  // Handle ingredients array (for "beauty")
-  if (ingredients && Array.isArray(ingredients)) {
-    ingredients.forEach((newIngredient) => {
-      if (!product.ingredients.includes(newIngredient)) {
-        product.ingredients.push(newIngredient); // Add new ingredient if not exists
+    case "electronics":
+      if (!specifications || typeof specifications !== "object") {
+        throw new CustomFail(
+          "Electronics require specifications as a key-value map."
+        );
       }
-    });
+      break;
+
+    case "beauty":
+      if (!ingredients || !Array.isArray(ingredients)) {
+        throw new CustomFail(
+          "Beauty products require a valid ingredients array."
+        );
+      }
+      break;
+
+    case "groceries":
+      if (!expiryDate || isNaN(new Date(expiryDate).getTime())) {
+        throw new CustomFail("Groceries require a valid expiry date.");
+      }
+      break;
+    default:
+      throw new CustomFail("Invalid product category provided.");
   }
 
-  // Update expiryDate (for "groceries")
-  if (expiryDate) {
-    product.expiryDate = expiryDate;
+  // Calculate price with old price and discount
+  if (oldPrice && discount) {
+    req.body.price = parseFloat(
+      (oldPrice - (oldPrice * discount) / 100).toFixed(2)
+    );
+  } else {
+    req.body.price = oldPrice;
   }
 
-  // Update specifications (for "electronics")
-  if (specifications && typeof specifications === "object") {
-    product.specifications = specifications;
+  // Calculate coins with price
+  if (req.body.price) {
+    req.body.coins = Math.floor((req.body.price * 3) / 2);
   }
 
-  // Handle image update with Cloudinary
-  if (image) {
-    if (product.image) {
-      // Optional: Delete the old image from Cloudinary
-      const oldImagePublicId = product.image.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(oldImagePublicId);
-    }
-    // Upload the new image
-    const cloudinaryResponse = await cloudinary.uploader.upload(image, {
-      folder: "products",
-    });
-    product.image = cloudinaryResponse.secure_url; // Save the new image URL
+  // Update the product
+  const updatedProduct = await catchDbErrors(
+    ProductModel.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body },
+      { new: true }
+    )
+  );
+
+  if (!updatedProduct) {
+    throw new CustomFail("Failed to update product.");
   }
-
-  // Save updated product
-  const updatedProd = await catchDbErrors(product.save());
-
-  res.json(new CustomSuccess(updatedProd));
+  res.json(new CustomSuccess(updatedProduct));
 }
 
 /**

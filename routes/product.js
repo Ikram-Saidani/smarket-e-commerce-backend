@@ -14,16 +14,33 @@ const {
   getProductsCountInStockController,
   getProductsWithTitleSearchController,
 } = require("../controllers/product");
-const multer = require("multer");
 const verifyAdmin = require("../utils/verifyAdmin");
+const multer = require("multer");
+const fs = require("fs");
 
-const storage = multer.memoryStorage();
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const productDir = `uploads/images`;
+    fs.mkdirSync(productDir, { recursive: true });
+    cb(null, productDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const extension = file.originalname.split(".").pop();
+    cb(null, `image-${uniqueSuffix}.${extension}`);
+  },
+});
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+  if (!allowedTypes.includes(file.mimetype)) {
+    return cb(new Error("Only JPEG and PNG images are allowed"), false);
+  }
+  cb(null, true);
+};
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-}).single("image");
-
+const upload = multer({  storage: storage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 } });
 /**
  * @method get
  * @route : ~/api/product/
@@ -105,7 +122,7 @@ ProductRouter.get("/:id", asyncHandler(getSingleProductController));
 ProductRouter.post(
   "/",
   asyncHandler(verifyAdmin),
-  upload,
+  upload.single('image'),
   asyncHandler(postNewProductController)
 );
 
@@ -118,7 +135,6 @@ ProductRouter.post(
 ProductRouter.put(
   "/update/:id",
   asyncHandler(verifyAdmin),
-  upload,
   asyncHandler(updateProductController)
 );
 

@@ -93,10 +93,13 @@ async function deleteCommentsController(req, res) {
  * @access admin
  */
 async function adminDeleteCommentController(req, res) {
+  const comment = await catchDbErrors(CommentModel.findById(req.params.id));
+  if (!comment) {
+    throw new CustomFail("comment not found");
+  }
   const deletedComment = await catchDbErrors(
     CommentModel.findByIdAndDelete(req.params.id)
   );
-
   res.json(new CustomSuccess(deletedComment));
 }
 module.exports = {
