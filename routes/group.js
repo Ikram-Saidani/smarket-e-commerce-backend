@@ -1,11 +1,11 @@
 const {
   createGroupController,
-  updateAmbassadorController,
-  deleteAndReplaceCoordinatorController,
+  deleteMemberController,
   getTotalSalesController,
-  deleteAmbassadorController,
   getAllGroupsController,
   getGroupMembersController,
+  deleteGroupController,
+  replaceCoordinatorController,addAmbassadorController
 } = require("../controllers/group");
 const GroupRouter = require("express").Router();
 const asyncHandler = require("../utils/asyncHandler");
@@ -26,38 +26,38 @@ GroupRouter.post(
 
 /**
  * @method put
- * @route : ~/api/group/:groupId/updateambassador
- * @desc  : change Ambassador from Group to Another Group
+ * @route : ~/api/group/addAmbassador/:groupId
+ * @desc  : Add Ambassador to Group
  * @access : admin
  */
 GroupRouter.put(
-  "/:groupId/updateambassador",
+  "/addambassador/:groupId",
   asyncHandler(verifyAdmin),
-  asyncHandler(updateAmbassadorController)
+  asyncHandler(addAmbassadorController)
 );
 
 /**
  * @method delete
- * @route : ~/api/group/:groupId/deletecoordinator
- * @desc  : Delete Coordinator and Replace him with another one
+ * @route : ~/api/group/:groupId
+ * @desc  : Delete member
  * @access : admin
  */
 GroupRouter.delete(
-  "/:groupId/deletecoordinator",
+  "/deletemember/:groupId",
   asyncHandler(verifyAdmin),
-  asyncHandler(deleteAndReplaceCoordinatorController)
+  asyncHandler(deleteMemberController)
 );
 
 /**
- * @method delete
- * @route : ~/api/group/:groupId/deleteambassador
- * @desc  : Delete Ambassador from Group
+ * @method put
+ * @route : ~/api/group/replacecoordinator/:groupId
+ * @desc  : replace coordinator
  * @access : admin
  */
-GroupRouter.delete(
-  "/:groupId/deleteambassador",
+GroupRouter.put(
+  "/replacecoordinator/:groupId",
   asyncHandler(verifyAdmin),
-  asyncHandler(deleteAmbassadorController)
+  asyncHandler(replaceCoordinatorController)
 );
 
 /**
@@ -82,6 +82,18 @@ GroupRouter.get(
   "/",
   asyncHandler(verifyAdmin),
   asyncHandler(getAllGroupsController)
+);
+
+/**
+ * @method delete
+ * @route : ~/api/group/:id
+ * @desc  : Delete group
+ * @access : admin
+ */
+GroupRouter.delete(
+  "/:id",
+  asyncHandler(verifyAdmin),
+  asyncHandler(deleteGroupController)
 );
 
 /**

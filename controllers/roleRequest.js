@@ -65,10 +65,10 @@ async function wishToBeAmbassadorOrCoordinatorController(req, res) {
       (acc, order) => acc + order.paymentTotal,
       0
     );
-    if (total < 1000) {
+    if (total < 5000) {
       return res.json(
         new CustomFail(
-          "You must have a total order greater than 1000 $ to be a coordinator"
+          "You must have a total order greater than 5000 $ to be a coordinator"
         )
       );
     }
@@ -106,6 +106,16 @@ async function updateRoleRequestStatusController(req, res) {
       : "coordinator";
     await user.save();
   }
+
+  if (status === "approved" && roleRequest.message.includes("coordinator")) {
+    await catchDbErrors(
+      UserModel.updateOne(
+        { _id: roleRequest.userId },
+        { $set: { groupId: null } }
+      )
+    );
+  }
+
   roleRequest.status = status;
   await roleRequest.save();
   const message =

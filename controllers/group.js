@@ -1,3 +1,5 @@
+const { Types } = require("mongoose");
+const { default: mongoose } = require("mongoose");
 const GroupModel = require("../models/group");
 const NotificationModel = require("../models/notification");
 const OrderModel = require("../models/order");
@@ -13,7 +15,6 @@ const { CustomFail, CustomSuccess } = require("../utils/customResponses");
  */
 async function createGroupController(req, res) {
   const { coordinatorId, ambassadorsIds } = req.body;
-  const adminId = req.user._id;
 
   if (!coordinatorId) {
     throw new CustomFail("Coordinator is required.");
@@ -21,7 +22,6 @@ async function createGroupController(req, res) {
 
   const group = await catchDbErrors(
     GroupModel.create({
-      admin: adminId,
       coordinator: coordinatorId,
       ambassadors: ambassadorsIds,
     })
@@ -48,102 +48,113 @@ async function createGroupController(req, res) {
 
 /**
  * @method put
- * @route : ~/api/group/:groupId/updateambassador
- * @desc  : change Ambassador from Group to Another Group
+ * @route : ~/api/group/addAmbassador/:groupId
+ * @desc  : Add Ambassador to Group
  * @access : admin
  */
-async function updateAmbassadorController(req, res) {
+async function addAmbassadorController(req, res) {
   const { groupId } = req.params;
-  const { ambassadorId, targetGroupId } = req.body;
-
-  const [sourceGroup, targetGroup] = await Promise.all([
-    catchDbErrors(GroupModel.findById(groupId)),
-    catchDbErrors(GroupModel.findById(targetGroupId)),
-  ]);
-
-  if (!sourceGroup) throw new CustomFail("Source group not found.");
-  if (!targetGroup) throw new CustomFail("Target group not found.");
-
-  const ambassadorIndex = sourceGroup.ambassadors.indexOf(ambassadorId);
-  if (ambassadorIndex === -1) {
-    throw new CustomFail("Ambassador not found in the source group.");
-  }
-
-  sourceGroup.ambassadors.splice(ambassadorIndex, 1);
-  targetGroup.ambassadors.push(ambassadorId);
-
-  await Promise.all([sourceGroup.save(), targetGroup.save()]);
-
-  await catchDbErrors(
-    UserModel.findByIdAndUpdate(ambassadorId, { groupId: targetGroupId })
-  );
-
-  res.json(
-    new CustomSuccess("Ambassador successfully moved to the target group.")
-  );
-}
-
-/**
- * @method delete
- * @route : ~/api/group/:groupId/deletecoordinator
- * @desc  : Delete Coordinator and Replace them with another one
- * @access : admin
- */
-async function deleteAndReplaceCoordinatorController(req, res) {
-  const { groupId } = req.params;
-  const { newCoordinatorId } = req.body;
-
+  const { ambassador } = req.body;
+ 
+  const ambassadorId = new Types.ObjectId(ambassador);
   const group = await catchDbErrors(GroupModel.findById(groupId));
   if (!group) {
     throw new CustomFail("Group not found.");
   }
 
-  const oldCoordinatorId = group.coordinator;
-  if (!oldCoordinatorId) {
-    throw new CustomFail("No coordinator assigned to this group.");
+  if (group.ambassadors.includes(ambassadorId)) {
+    throw new CustomFail("Ambassador already in the group.");
   }
 
-  group.coordinator = newCoordinatorId;
-  await catchDbErrors(group.save());
+  await catchDbErrors(
+    GroupModel.updateOne(
+      { _id: groupId },
+      { $push: { ambassadors: ambassadorId } }
+    )
+  );
 
-  await Promise.all([
-    UserModel.findByIdAndUpdate(oldCoordinatorId, { groupId: null }),
-    UserModel.findByIdAndUpdate(newCoordinatorId, { groupId }),
-  ]);
+  await catchDbErrors(
+    UserModel.updateOne({ _id: ambassadorId }, { groupId: groupId })
+  );
 
-  res.json(new CustomSuccess("Coordinator successfully replaced."));
+  res.json(new CustomSuccess("Ambassador successfully added to the group."));
 }
 
 /**
  * @method delete
- * @route : ~/api/group/:groupId/deleteambassador
+ * @route : ~/api/group/:groupId
  * @desc  : Delete Ambassador from Group
  * @access : admin
  */
-async function deleteAmbassadorController(req, res) {
+async function deleteMemberController(req, res) {
   const { groupId } = req.params;
-  const { ambassadorId } = req.body;
+  const { member } = req.body;
+  const group = await catchDbErrors(GroupModel.findById({ _id: groupId }));
+  const memberId = new Types.ObjectId(member);
+  if (!group) {
+    throw new CustomFail("Group not found.");
+  }
 
+  if (group.coordinator === memberId) {
+    throw new CustomFail("Coordinator cannot be deleted.");
+  }
+
+  const ambassadorIndex = group.ambassadors.indexOf(memberId);
+  if (ambassadorIndex === -1) {
+    throw new CustomFail("Member not found in this group.");
+  }
+
+  group.ambassadors.splice(ambassadorIndex, 1);
+  await catchDbErrors(
+    GroupModel.findByIdAndUpdate(
+      { _id: groupId },
+      { ambassadors: group.ambassadors }
+    )
+  );
+
+  await catchDbErrors(
+    UserModel.findByIdAndUpdate({ _id: memberId }, { groupId: null })
+  );
+
+  res.json(new CustomSuccess("Member successfully removed from the group."));
+}
+
+/**
+ * @method put
+ * @route : ~/api/group/replacecoordinator/:groupId
+ * @desc  : replace coordinator
+ * @access : admin
+ */
+async function replaceCoordinatorController(req, res) {
+  const { groupId } = req.params;
+  const { coordinatorId } = req.body;
+  const coordinator = new Types.ObjectId(coordinatorId);
   const group = await catchDbErrors(GroupModel.findById(groupId));
   if (!group) {
     throw new CustomFail("Group not found.");
   }
 
-  const ambassadorIndex = group.ambassadors.indexOf(ambassadorId);
-  if (ambassadorIndex === -1) {
-    throw new CustomFail("Ambassador not found in this group.");
+  if (group.coordinator === coordinator) {
+    throw new CustomFail("The new coordinator is already the coordinator.");
   }
 
-  group.ambassadors.splice(ambassadorIndex, 1);
-  await catchDbErrors(group.save());
+  if (group.ambassadors.includes(coordinator)) {
+    throw new CustomFail("The new coordinator is already an ambassador.");
+  }
 
   await catchDbErrors(
-    UserModel.findByIdAndUpdate(ambassadorId, { groupId: null })
+    UserModel.updateOne({ _id: group.coordinator }, { groupId: null })
   );
 
-  res.json(
-    new CustomSuccess("Ambassador successfully removed from the group.")
+  await catchDbErrors(
+    UserModel.updateOne({ _id: coordinator }, { groupId: groupId })
   );
+
+  await catchDbErrors(
+    GroupModel.updateOne({ _id: groupId }, { coordinator: coordinator })
+  );
+
+  res.json(new CustomSuccess("Coordinator successfully replaced."));
 }
 
 /**
@@ -210,7 +221,22 @@ async function getTotalSalesController(req, res) {
       });
     }
   }
-  await catchDbErrors(NotificationModel.insertMany(notifications));
+  const existNotifications = await catchDbErrors(
+    NotificationModel.find({
+      userId: { $in: coordinatorIds.concat(ambassadorIds) },
+      message: notifications[0].message,
+    })
+  );
+  const existNotificationsIds = existNotifications.map((notification) =>
+    notification.userId.toString()
+  );
+
+  const newNotifications = notifications.filter(
+    (notification) =>
+      !existNotificationsIds.includes(notification.userId.toString())
+  );
+
+  await catchDbErrors(NotificationModel.insertMany(newNotifications));
 
   res.json(
     new CustomSuccess({
@@ -240,6 +266,25 @@ async function getAllGroupsController(req, res) {
 }
 
 /**
+ * @method delete
+ * @route : ~/api/group/:id
+ * @desc  : Delete group
+ * @access : admin
+ */
+async function deleteGroupController(req, res) {
+  const { id } = req.params;
+  const group = await catchDbErrors(GroupModel.findById(id));
+  if (!group) {
+    throw new CustomFail("Group not found.");
+  }
+
+  await catchDbErrors(UserModel.updateMany({ groupId: id }, { groupId: null }));
+  await catchDbErrors(GroupModel.deleteOne({ _id: id }, { new: true }));
+
+  res.json(new CustomSuccess("Group successfully deleted."));
+}
+
+/**
  * @method get
  * @route : ~/api/group/:id
  * @desc  : Get list of group members for one of the members
@@ -253,7 +298,9 @@ async function getGroupMembersController(req, res) {
   }
 
   const groupMembers = await catchDbErrors(
-    UserModel.find({ _id: { $in: [group.coordinator, ...group.ambassadors] } })
+    UserModel.find({
+      _id: { $in: [group.coordinator, ...group.ambassadors] },
+    }).select(-"password")
   );
 
   res.json(new CustomSuccess(groupMembers));
@@ -261,10 +308,11 @@ async function getGroupMembersController(req, res) {
 
 module.exports = {
   createGroupController,
-  updateAmbassadorController,
-  deleteAndReplaceCoordinatorController,
+  deleteMemberController,
   getTotalSalesController,
-  deleteAmbassadorController,
   getAllGroupsController,
   getGroupMembersController,
+  deleteGroupController,
+  replaceCoordinatorController,
+  addAmbassadorController,
 };

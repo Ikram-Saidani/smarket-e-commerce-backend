@@ -1,3 +1,4 @@
+const OrderModel = require("../models/order");
 const UserModel = require("../models/user");
 const catchDbErrors = require("../utils/catchDbErros");
 const { CustomFail, CustomSuccess } = require("../utils/customResponses");
@@ -105,6 +106,15 @@ async function updateCoinsEarnedController(req, res) {
  * @access admin
  */
 async function updateUserRoleController(req, res) {
+  const userCurrentRole = await catchDbErrors(
+    UserModel.findById(req.params.id)
+  );
+  if (!userCurrentRole) {
+    throw new CustomFail("User not found");
+  }
+  if (userCurrentRole.role === req.body.role) {
+    throw new CustomFail("User already has this role");
+  }
   const updatedUser = await catchDbErrors(
     UserModel.findByIdAndUpdate(
       req.params.id,
@@ -209,10 +219,20 @@ async function getUsersController(req, res) {
  * @access admin
  */
 async function deleteUserController(req, res) {
+  const userId = req.params.id;
   const user = await catchDbErrors(UserModel.findByIdAndDelete(req.params.id));
   if (!user) {
     throw new CustomFail("User not found");
   }
+  //delete the user id from GroupModel
+  await catchDbErrors(
+    GroupModel.updateMany(
+      {},
+      {
+        $pull: { coordinator: userId, ambassadors: userId },
+      }
+    )
+  );
   res.json(new CustomSuccess("User deleted"));
 }
 
