@@ -8,6 +8,7 @@ const donationHistorySchema = new Schema(
       ref: "helpandhope",
       required: true,
     },
+    status: { type: Boolean, default: false },
   },
   { timestamps: true, versionKey: false }
 );

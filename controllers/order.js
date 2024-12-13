@@ -35,7 +35,19 @@ async function postNewOrderController(req, res) {
     if (product.countInStock < item.quantity) {
       throw new CustomFail(`Insufficient stock for product: ${product.name}`);
     }
-
+    if(item.category==="fashion"){
+     product.size.map((size) => {
+      if (size.size === item.selectedSize.size) {
+        size.quantity -= item.quantity;
+      }
+    });
+    }else if(item.category==="footwear"){
+      product.shoesize.map((shoesize) => {
+        if (shoesize.shoesize === item.selectedSize.shoeSize) {
+          shoesize.quantity -= item.quantity;
+        }
+      });
+    }
     product.countInStock -= item.quantity;
     await catchDbErrors(
       ProductModel.updateOne(
@@ -43,6 +55,7 @@ async function postNewOrderController(req, res) {
         { countInStock: product.countInStock }
       )
     );
+    
 
     // Notify admin if stock is low
     if (product.countInStock < 5) {
@@ -88,7 +101,16 @@ async function postNewOrderController(req, res) {
       paymentTotal -= (paymentTotal * 5) / 100;
     }
   }
-
+//if admin/coordinator/ambassador
+  if (
+    user.role === "coordinator" ||
+    user.role === "ambassador" ||
+    user.role === "admin"
+  ) {
+    discountUsed += 20;
+    paymentTotal -= (paymentTotal * 20) / 100;
+  }
+  
   // Apply 20% discount for first order
   const userOrders = await catchDbErrors(OrderModel.find({ userId: user._id }));
   if (!userOrders.length) {

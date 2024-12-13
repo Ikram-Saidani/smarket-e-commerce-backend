@@ -3,6 +3,7 @@ const { CustomSuccess, CustomFail } = require("../utils/customResponses");
 const catchDbErrors = require("../utils/catchDbErros");
 const { validationResult } = require("express-validator");
 const cloudinary = require("../utils/cloudinary");
+const fs = require("fs");
 
 /**
  * @method get
@@ -209,7 +210,6 @@ async function getSingleProductController(req, res) {
   }
   res.json(new CustomSuccess(product));
 }
-
 /**
  * @method post
  * @route : ~/api/product
@@ -243,6 +243,13 @@ async function postNewProductController(req, res) {
     console.error("Error during Cloudinary upload:", error); // Log the full error
     throw new CustomFail("Cloudinary upload failed.");
   }
+  fs.unlink(req.file.path
+    , (err) => {
+      if (err) {
+        console.error("Error during file deletion:", err);
+      }
+    }
+  );
 
   switch (category) {
     case "fashion":

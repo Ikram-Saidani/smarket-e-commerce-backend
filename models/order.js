@@ -14,7 +14,7 @@ const orderSchema = new Schema(
     address: { type: String, required: true },
     paymentMode: {
       type: String,
-      enum: ["onDelivery", "withCard"],
+      enum: ["onDelivery", "withCard","withCoins"],
       required: true,
     },
     discountApplied: { type: Number },

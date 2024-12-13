@@ -4,9 +4,10 @@ const {
   getUserDonationHistoriesController,
   getSingleDonationHistoryController,
   deleteDonationHistoryByAdminController,
-  getDonationHistoriesByDateController,
   getTopUsersBasedOnDonationHistoriesController,
   getTopUsersBasedOnCoinsDonatedController,
+  getNotCompletedDonationHistoriesController,
+  updateDonationHistoryStatusController,
 } = require("../controllers/donationHistory");
 const asyncHandler = require("../utils/asyncHandler");
 const donationHistoryRouter = require("express").Router();
@@ -75,18 +76,6 @@ donationHistoryRouter.delete(
 
 /**
  * @method get
- * @endpoint ~/api/donationHistory/done/:date
- * @description Filter done donationHistories for a specific month and year
- * @access admin
- */
-donationHistoryRouter.get(
-  "/done/:date",
-  asyncHandler(verifyAdmin),
-  asyncHandler(getDonationHistoriesByDateController)
-);
-
-/**
- * @method get
  * @endpoint ~/api/donationHistory/topusers/donationHistories
  * @description Get Top Users Based on donationHistories
  * @access admin
@@ -107,6 +96,30 @@ donationHistoryRouter.get(
   "/topusers/coinsDonated",
   asyncHandler(verifyAdmin),
   asyncHandler(getTopUsersBasedOnCoinsDonatedController)
+);
+
+/**
+ * @method get
+ * @route : ~/api/donationHistory/status/false
+ * @desc  : get donation with status false
+ * @access : admin
+ */
+donationHistoryRouter.get(
+  "/status/false",
+  asyncHandler(verifyAdmin),
+  asyncHandler(getNotCompletedDonationHistoriesController)
+);
+
+/**
+ * @method put
+ * @route : ~/api/donationHistory/:id
+ * @desc  : update donation status to true
+ * @access : admin
+ */
+donationHistoryRouter.put(
+  "/:id",
+  asyncHandler(verifyAdmin),
+  asyncHandler(updateDonationHistoryStatusController)
 );
 
 module.exports = donationHistoryRouter;

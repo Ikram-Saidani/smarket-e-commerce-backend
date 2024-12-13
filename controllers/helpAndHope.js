@@ -17,6 +17,21 @@ async function getAllHelpAndHopeProductsController(req, res) {
 }
 
 /**
+ * @method get
+ * @route : ~/api/helpAndHope/:id
+ * @desc  : get single Help And Hope Product
+ * @access : admin
+ */
+async function getSingleHelpAndHopeProductController(req, res) {
+  const { id } = req.params;
+  const product = await catchDbErrors(HelpAndHopeModel.findById(id));
+  if (!product) {
+    throw new CustomFail("Product not found.");
+  }
+  res.json(new CustomSuccess(product));
+}
+
+/**
  * @method post
  * @route /api/helpAndHope/create
  * @desc  : Add a new Help And Hope Product
@@ -125,7 +140,7 @@ async function updateHelpAndHopeProductController(req, res) {
         theme,
         image: imagePath,
       },
-      { new: true,runValidators:true }
+      { new: true, runValidators: true }
     )
   );
 
@@ -147,7 +162,9 @@ async function updateHelpAndHopeProductController(req, res) {
  */
 async function deleteHelpAndHopeProductController(req, res) {
   const { id } = req.params;
-  const deletedProduct = await catchDbErrors(HelpAndHopeModel.findByIdAndDelete(id));
+  const deletedProduct = await catchDbErrors(
+    HelpAndHopeModel.findByIdAndDelete(id)
+  );
 
   if (!deletedProduct) {
     return res.status(404).json({ message: "Product not found." });
@@ -162,5 +179,7 @@ async function deleteHelpAndHopeProductController(req, res) {
 module.exports = {
   getAllHelpAndHopeProductsController,
   postNewHelpAndHopeProductController,
+  deleteHelpAndHopeProductController,
   updateHelpAndHopeProductController,
+  getSingleHelpAndHopeProductController,
 };

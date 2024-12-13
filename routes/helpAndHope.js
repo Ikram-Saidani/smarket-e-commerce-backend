@@ -5,6 +5,7 @@ const {
   postNewHelpAndHopeProductController,
   updateHelpAndHopeProductController,
   deleteHelpAndHopeProductController,
+  getSingleHelpAndHopeProductController,
 } = require("../controllers/helpAndHope");
 const verifyAdmin = require("../utils/verifyAdmin");
 
@@ -15,6 +16,18 @@ const verifyAdmin = require("../utils/verifyAdmin");
  * @access : visitor
  */
 HelpAndHopeRouter.get("/", asyncHandler(getAllHelpAndHopeProductsController));
+
+/**
+ * @method get
+ * @route : ~/api/helpAndHope/:id
+ * @desc  : get single Help And Hope Product
+ * @access : admin
+ */
+HelpAndHopeRouter.get(
+  "/:id",
+  asyncHandler(verifyAdmin),
+  asyncHandler(getSingleHelpAndHopeProductController)
+);
 
 /**
  * @method post
