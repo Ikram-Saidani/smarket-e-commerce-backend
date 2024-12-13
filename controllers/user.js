@@ -92,7 +92,7 @@ async function updateCoinsEarnedController(req, res) {
   const updatedUser = await catchDbErrors(
     UserModel.findByIdAndUpdate(
       req.params.id,
-      { $inc: { coinsEarned: req.body.coinsEarned } },
+      { coinsEarned: req.body.coinsEarned },
       { new: true }
     )
   );

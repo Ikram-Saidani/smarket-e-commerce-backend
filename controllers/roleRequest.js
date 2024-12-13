@@ -68,7 +68,7 @@ async function wishToBeAmbassadorOrCoordinatorController(req, res) {
     if (total < 5000) {
       return res.json(
         new CustomFail(
-          "You must have a total order greater than 5000 $ to be a coordinator"
+          "You must have a total order greater than 5000 TND to be a coordinator"
         )
       );
     }

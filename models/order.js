@@ -6,6 +6,7 @@ const orderSchema = new Schema(
     orderedProducts: [
       {
         productId: { type: Types.ObjectId, ref: "product" },
+        selectedSize: { type: String, default: "N/A" },
         quantity: { type: Number, required: true, min: 1 },
         totalPrice: { type: Number, required: true },
         _id: 0,

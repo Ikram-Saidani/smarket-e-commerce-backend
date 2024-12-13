@@ -37,13 +37,13 @@ async function postNewOrderController(req, res) {
     }
     if(item.category==="fashion"){
      product.size.map((size) => {
-      if (size.size === item.selectedSize.size) {
+      if (size.size === item.selectedSize) {
         size.quantity -= item.quantity;
       }
     });
     }else if(item.category==="footwear"){
       product.shoesize.map((shoesize) => {
-        if (shoesize.shoesize === item.selectedSize.shoeSize) {
+        if (shoesize.shoesize === item.selectedSize) {
           shoesize.quantity -= item.quantity;
         }
       });
@@ -148,7 +148,7 @@ async function postNewOrderController(req, res) {
     NotificationModel.create({
       userId: user._id,
       message: `You have earned ${
-        paymentTotal * 0.1
+        (paymentTotal * 0.1).toFixed(2)
       } coins for this order. You have used ${discountUsed}% discount.`,
     })
   );
